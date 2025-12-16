@@ -9,7 +9,14 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarHeader,
+  SidebarTrigger,
+  useSidebar
 } from "@/components/ui/sidebar"
+
+import { Notebook } from 'lucide-react'
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 // Menu items.
 const items = [
@@ -41,8 +48,20 @@ const items = [
 ]
 
 export function AppSidebar() {
+  const { open } = useSidebar()
+
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
+      <SidebarHeader className="flex flex-row items-center justify-between">
+        {open && <Button
+          variant="ghost"
+          size="icon"
+          className={cn("size-7")}
+        >
+          <Notebook />
+        </Button>}
+        <SidebarTrigger />
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Application</SidebarGroupLabel>
