@@ -1,4 +1,4 @@
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react"
+import { Calendar, Home, NotebookPen, Notebook, Search, Settings } from "lucide-react"
 
 import {
   Sidebar,
@@ -14,9 +14,9 @@ import {
   useSidebar
 } from "@/components/ui/sidebar"
 
-import { Notebook } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useNavigate } from "react-router"
 
 // Menu items.
 const items = [
@@ -26,9 +26,9 @@ const items = [
     icon: Home,
   },
   {
-    title: "Inbox",
-    url: "#",
-    icon: Inbox,
+    title: "Note",
+    url: "/note/3326",
+    icon: NotebookPen,
   },
   {
     title: "Calendar",
@@ -50,6 +50,11 @@ const items = [
 export function AppSidebar() {
   const { open } = useSidebar()
 
+  const navigate = useNavigate();
+  const handelNavTo = (item) => {
+    navigate(item.url);
+  }
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="flex flex-row items-center justify-between">
@@ -69,7 +74,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild onClick={() => handelNavTo(item)}>
                     <a href={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
