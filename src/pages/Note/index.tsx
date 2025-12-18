@@ -1,7 +1,10 @@
 import MarkdownEditor from "@/components/MarkdownEditor"
 import { useState } from "react"
+import { useParams } from "react-router"
 
 const Note = () => {
+  const { id } = useParams<{ id: string }>()
+
   const [content, setContent] = useState('# sa')
   return (
     <div className="h-screen flex flex-col p-4">
