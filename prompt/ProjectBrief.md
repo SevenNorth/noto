@@ -35,7 +35,7 @@
 - 关键字段：
   - `id`
   - `parent_id`
-  - `node_type`
+  - `scope` -- 'project' | 'notes' | 'snippets'
   - `title`
   - `order_index`（用于拖拽排序）
   - `created_at`

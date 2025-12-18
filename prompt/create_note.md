@@ -23,7 +23,7 @@
 实现一个 **Tauri command：`create_note`**，完成以下行为：
 
 1. 在 `tree_nodes` 中创建一个节点：
- - `node_type = 'note'`
+ - `scope = 'notes'`
  - 支持 `parent_id`
 2. 在 `notes` 表中创建记录
 3. 在文件系统中创建对应的 Markdown 文件
@@ -47,7 +47,7 @@
 
 - `id TEXT PRIMARY KEY`
 - `parent_id TEXT`
-- `node_type TEXT`
+- `scope TEXT`  -- 'project' | 'notes' | 'snippets'
 - `title TEXT`
 - `order_index INTEGER`
 - `created_at INTEGER`
