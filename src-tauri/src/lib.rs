@@ -4,12 +4,8 @@ mod db;
 mod fs;
 
 use commands::{
-    create_note, 
-    create_snippet, 
-    create_tree_node,
-    delete_tree_node, 
-    update_tree_node,
-    list_tree_nodes,
+    create_note, create_snippet, create_tree_node, delete_tree_node, list_tree_nodes,
+    list_tree_nodes_tree, update_tree_node,
 };
 
 #[tauri::command]
@@ -34,7 +30,8 @@ pub fn run() {
             create_tree_node,
             update_tree_node,
             delete_tree_node,
-            list_tree_nodes
+            list_tree_nodes,
+            list_tree_nodes_tree
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
