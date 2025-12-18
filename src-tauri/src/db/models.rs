@@ -86,8 +86,6 @@ pub fn insert_node_note_resource(
     Ok(())
 }
 
-use rusqlite::{params, Transaction};
-
 /// 插入一条 snippet 记录
 ///
 /// 约定：
@@ -118,8 +116,6 @@ pub fn insert_snippet(
 
     Ok(())
 }
-
-use rusqlite::{params, Transaction};
 
 /// 插入一个 tree_node（Snippets Scope）
 ///

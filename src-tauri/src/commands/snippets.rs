@@ -18,7 +18,7 @@ pub fn create_snippet(
     let node_id = Uuid::new_v4().to_string();
 
     // 1. 打开数据库连接
-    let conn = get_connection().map_err(|e| e.to_string())?;
+    let mut conn = get_connection().map_err(|e| e.to_string())?;
 
     // 2. 开启 transaction
     let tx = conn.transaction().map_err(|e| e.to_string())?;
