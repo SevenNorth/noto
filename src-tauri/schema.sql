@@ -13,7 +13,6 @@ CREATE TABLE IF NOT EXISTS tree_nodes (
   parent_id TEXT,
 
   name TEXT NOT NULL,
-  node_type TEXT NOT NULL,     -- 'project' | 'folder'
   scope TEXT NOT NULL,         -- 'project' | 'notes' | 'snippets'
 
   order_index INTEGER NOT NULL DEFAULT 0, -- ordering among siblings

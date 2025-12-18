@@ -33,7 +33,6 @@ pub fn insert_note(
 /// 插入一个 tree_node（Notes Scope）
 ///
 /// 约定：
-/// - node_type 固定为 'folder'
 /// - scope 固定为 'notes'
 pub fn insert_notes_tree_node(
     tx: &Transaction,
@@ -49,13 +48,12 @@ pub fn insert_notes_tree_node(
             id,
             parent_id,
             name,
-            node_type,
             scope,
             order_index,
             created_at,
             updated_at
         )
-        VALUES (?, ?, ?, 'folder', 'notes', ?, ?, ?)
+        VALUES (?, ?, ?, 'notes', ?, ?, ?)
         "#,
         params![node_id, parent_id, name, order_index, now, now],
     )?;
@@ -120,7 +118,6 @@ pub fn insert_snippet(
 /// 插入一个 tree_node（Snippets Scope）
 ///
 /// 约定：
-/// - node_type 固定为 'folder'
 /// - scope 固定为 'snippets'
 pub fn insert_snippets_tree_node(
     tx: &Transaction,
@@ -136,13 +133,12 @@ pub fn insert_snippets_tree_node(
             id,
             parent_id,
             name,
-            node_type,
             scope,
             order_index,
             created_at,
             updated_at
         )
-        VALUES (?, ?, ?, 'folder', 'snippets', ?, ?, ?)
+        VALUES (?, ?, ?, 'snippets', ?, ?, ?)
         "#,
         params![node_id, parent_id, name, order_index, now, now],
     )?;
