@@ -1,4 +1,4 @@
-use rusqlite::{params, Connection, Transaction};
+use rusqlite::{params, Transaction};
 
 /// 插入一条 note 记录
 ///

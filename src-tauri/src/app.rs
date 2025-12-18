@@ -8,7 +8,7 @@ pub fn init(app: &AppHandle) -> anyhow::Result<()> {
     // 1️⃣ 初始化目录
     crate::fs::init_dirs(app)?;
     // 2️⃣ 初始化数据库
-    crate::db::init_db(app)?;
+    crate::db::init_db()?;
 
     // 3️⃣ 保存 db_path
     let db_path = app.path().app_data_dir()?.join("db.sqlite");
