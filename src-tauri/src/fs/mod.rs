@@ -1,3 +1,6 @@
+pub mod attachments;
+pub mod notes;
+
 use std::fs;
 use tauri::{AppHandle, Manager};
 

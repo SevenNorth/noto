@@ -1,4 +1,5 @@
 use tauri::AppHandle;
+use tauri::Manager;
 use uuid::Uuid;
 
 use crate::db::connection::get_connection;
@@ -19,7 +20,7 @@ pub fn create_note(app: AppHandle, title: String, parent_id: Option<String>) -> 
         create_note_file(&app_data_dir, &note_id, &title).map_err(|e| e.to_string())?;
 
     // 2. 打开数据库连接
-    let conn = get_connection().map_err(|e| e.to_string())?;
+    let mut conn = get_connection().map_err(|e| e.to_string())?;
 
     // 3. 开启 transaction
     let tx = conn.transaction().map_err(|e| {
