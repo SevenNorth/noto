@@ -168,3 +168,65 @@ pub fn insert_node_snippet_resource(
 
     Ok(())
 }
+
+/// 插入一个通用 tree_node
+pub fn insert_tree_node(
+    tx: &Transaction,
+    node_id: &str,
+    parent_id: Option<&str>,
+    name: &str,
+    scope: &str,
+    order_index: i64,
+    now: i64,
+) -> rusqlite::Result<()> {
+    tx.execute(
+        r#"
+        INSERT INTO tree_nodes (
+            id,
+            parent_id,
+            name,
+            scope,
+            order_index,
+            created_at,
+            updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        "#,
+        params![node_id, parent_id, name, scope, order_index, now, now],
+    )?;
+
+    Ok(())
+}
+
+/// 更新一个 tree_node 的基本字段（parent/name/order）
+pub fn update_tree_node(
+    tx: &Transaction,
+    node_id: &str,
+    parent_id: Option<&str>,
+    name: &str,
+    order_index: i64,
+    now: i64,
+) -> rusqlite::Result<()> {
+    tx.execute(
+        r#"
+        UPDATE tree_nodes
+        SET parent_id = ?, name = ?, order_index = ?, updated_at = ?
+        WHERE id = ?
+        "#,
+        params![parent_id, name, order_index, now, node_id],
+    )?;
+
+    Ok(())
+}
+
+/// 删除一个 tree_node（注意需要先检查是否存在子节点或挂载资源）
+pub fn delete_tree_node(tx: &Transaction, node_id: &str) -> rusqlite::Result<()> {
+    tx.execute(
+        r#"
+        DELETE FROM tree_nodes WHERE id = ?
+        "#,
+        params![node_id],
+    )?;
+
+    Ok(())
+}

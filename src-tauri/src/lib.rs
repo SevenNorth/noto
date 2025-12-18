@@ -3,7 +3,14 @@ mod commands;
 mod db;
 mod fs;
 
-use commands::{create_note, create_snippet};
+use commands::{
+    create_note, 
+    create_snippet, 
+    create_tree_node,
+    delete_tree_node, 
+    update_tree_node,
+    list_tree_nodes,
+};
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -20,7 +27,15 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, create_note, create_snippet,])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            create_note,
+            create_snippet,
+            create_tree_node,
+            update_tree_node,
+            delete_tree_node,
+            list_tree_nodes
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
