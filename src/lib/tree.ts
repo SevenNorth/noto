@@ -1,29 +1,18 @@
-export interface FlatNode {
-  id: string
-  parent_id?: string | null
-  name: string
-  order_index?: number
-}
-
-export interface TreeNode {
-  id: string
-  label: string
-  children?: TreeNode[]
-}
+import type { FlatNode, TreeNode } from "./types";
 
 /**
  * Build nested tree from flat nodes. Returns roots array.
- * - nodes: flat array with id, parent_id, name, order_index
+ * - nodes: flat array with id, parentId, name, orderIndex
  */
 export function buildTree(nodes: FlatNode[]): TreeNode[] {
   const meta = new Map<string, { parent?: string | null; name: string; order: number }>()
   for (const n of nodes) {
-    meta.set(n.id, { parent: n.parent_id ?? null, name: n.name, order: n.order_index ?? 0 })
+    meta.set(n.id, { parent: n.parentId ?? null, name: n.name, order: n.orderIndex ?? 0 })
   }
 
   const childrenMap = new Map<string | null, string[]>()
   for (const n of nodes) {
-    const parent = n.parent_id ?? null
+    const parent = n.parentId ?? null
     const arr = childrenMap.get(parent) ?? []
     arr.push(n.id)
     childrenMap.set(parent, arr)

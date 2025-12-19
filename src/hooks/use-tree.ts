@@ -1,16 +1,11 @@
 "use client"
 
 import * as React from "react"
+import type { TreeNode } from "@/lib/types"
 
 /* =====================================================
  * Headless Tree —— Types
  * ===================================================== */
-
-export interface TreeNode {
-  id: string
-  label: string
-  children?: TreeNode[]
-}
 
 export interface useTreeProps {
   /** 数据 */

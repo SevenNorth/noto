@@ -1,4 +1,4 @@
-import type { TreeNode } from "@/hooks/use-tree"
+import type { TreeNode } from "@/lib/types"
 import { Tree } from "@/components/ui/tree"
 
 export const mixedTreeData: TreeNode[] = [

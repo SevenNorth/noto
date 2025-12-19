@@ -9,8 +9,8 @@ import {
 } from "@/components/ui/collapsible"
 import { cn } from "@/lib/utils"
 
-import { useTree, TreeNode, useTreeProps } from "@/hooks/use-tree"
-
+import { useTree, useTreeProps } from "@/hooks/use-tree"
+import type { TreeNode } from "@/lib/types"
 /* =====================================================
  * Tree UI Component (shadcn + Headless Tree)
  * ===================================================== */
