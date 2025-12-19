@@ -2,6 +2,24 @@ import { invoke } from "@tauri-apps/api/core";
 import { deepCamelToSnake, deepSnakeToCamel } from "@/lib/common";
 import type { FlatNode, TreeNode as TreeResponseNode } from "@/lib/types";
 import type { Scope } from "@/lib/types";
+import { toast } from "sonner";
+
+async function invokeCommand<TIn = any, TOut = any>(
+  cmd: string,
+  args?: TIn,
+  options?: { camelizeResult?: boolean }
+): Promise<TOut> {
+  const opts = { camelizeResult: true, ...(options || {}) };
+  try {
+    const payload = args !== undefined ? (deepCamelToSnake(args) as any) : undefined;
+    const res = await invoke(cmd, payload);
+    if (opts.camelizeResult === false) return res as TOut;
+    return deepSnakeToCamel(res) as TOut;
+  } catch (err) {
+    toast.error((err as Error)?.message ?? String(err));
+    throw err;
+  }
+}
 
 /* =========================
  * Notes
@@ -13,8 +31,7 @@ export interface CreateNoteParams {
 
 export const notesApi = {
   createNote: async (data: CreateNoteParams): Promise<void> => {
-    const args = deepCamelToSnake(data) as any;
-    return await invoke("create_note", args);
+    return await invokeCommand<CreateNoteParams, void>("create_note", data);
   },
 };
 
@@ -37,30 +54,22 @@ export interface UpdateTreeNodeParams {
 
 export const treeApi = {
   getTree: async (scope?: Scope): Promise<TreeResponseNode[]> => {
-    const args = deepCamelToSnake({ scope }) as any;
-    const res = await invoke("list_tree_nodes_tree", args);
-    return deepSnakeToCamel(res) as TreeResponseNode[];
+    return await invokeCommand<{ scope?: Scope }, TreeResponseNode[]>("list_tree_nodes_tree", { scope });
   },
 
   createTreeNode: async (data: CreateTreeNodeParams): Promise<string> => {
-    const args = deepCamelToSnake(data) as any;
-    const res = await invoke("create_tree_node", args);
-    return res as string;
+    return await invokeCommand<CreateTreeNodeParams, string>("create_tree_node", data);
   },
 
   updateTreeNode: async (data: UpdateTreeNodeParams): Promise<void> => {
-    const args = deepCamelToSnake(data) as any;
-    await invoke("update_tree_node", args);
+    return await invokeCommand<UpdateTreeNodeParams, void>("update_tree_node", data);
   },
 
   deleteTreeNode: async (nodeId: string): Promise<void> => {
-    const args = deepCamelToSnake({ nodeId }) as any;
-    await invoke("delete_tree_node", args);
+    return await invokeCommand<{ nodeId: string }, void>("delete_tree_node", { nodeId });
   },
 
   listTreeNodes: async (scope?: Scope): Promise<FlatNode[]> => {
-    const args = deepCamelToSnake({ scope }) as any;
-    const res = await invoke("list_tree_nodes", args);
-    return deepSnakeToCamel(res) as FlatNode[];
+    return await invokeCommand<{ scope?: Scope }, FlatNode[]>("list_tree_nodes", { scope });
   },
 };
