@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Calendar, Notebook, FolderCode, Plus } from "lucide-react"
+import { Calendar, Notebook, FolderCode, Plus, MoreVertical, Edit2, Trash2 } from "lucide-react"
 
 import {
   Sidebar,
@@ -14,14 +14,23 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuAction,
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar"
+
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { Tree } from "@/components/ui/tree"
 
 import { cn } from "@/lib/utils"
-import { Scope } from "@/lib/types"
+import { Scope, TreeNode } from "@/lib/types"
 import { treeApi } from "@/api"
 
 const groups = [
@@ -50,7 +59,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [activeItem, setActiveItem] = useState(groups[0])
   const { open, setOpen } = useSidebar()
 
-  const [treeData, setTreeData] = useState(null)
+  const [treeData, setTreeData] = useState<TreeNode[]>([])
 
   const createTreeNode = async () => {
     const res = await treeApi.createTreeNode({
@@ -73,6 +82,58 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     fetchTreeData()
   }, [activeItem])
 
+
+  const renderActions = (node: TreeNode) => {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              // Prevent row selection when opening the menu
+              e.stopPropagation()
+            }}
+            aria-label="更多操作"
+          >
+            <MoreVertical />
+          </Button>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent side="bottom" align="start">
+          <DropdownMenuItem
+            onClick={() => {
+              console.log("新增", node.id)
+            }}
+          >
+            <Plus className="size-4" />
+            新增
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onClick={() => {
+              console.log("编辑", node.id)
+            }}
+          >
+            <Edit2 className="size-4" />
+            编辑
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => {
+              console.log("删除", node.id)
+            }}
+          >
+            <Trash2 className="size-4" />
+            删除
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
 
   return (
     <Sidebar
@@ -158,6 +219,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarGroupContent >
               <Tree
                 data={treeData || []}
+                renderActions={renderActions}
               />
             </SidebarGroupContent>
           </SidebarGroup>
