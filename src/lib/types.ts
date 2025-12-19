@@ -1,4 +1,10 @@
-export type Scope = 'project' | 'notes' | 'snippets';
+export const Scope = {
+  PROJECT: 'project',
+  NOTES: 'notes',
+  SNIPPETS: 'snippets',
+} as const;
+
+export type Scope = (typeof Scope)[keyof typeof Scope];
 
 export interface FlatNode {
   id: string
