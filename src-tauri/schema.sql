@@ -13,12 +13,12 @@ CREATE TABLE IF NOT EXISTS tree_nodes (
   parent_id TEXT,
 
   name TEXT NOT NULL,
-  scope TEXT NOT NULL,         -- 'project' | 'notes' | 'snippets'
+  scope TEXT NOT NULL,         -- 'projects' | 'notes' | 'snippets'
 
   order_index INTEGER NOT NULL DEFAULT 0, -- ordering among siblings
-         -- 'project' | 'notes' | 'snippets'
+         -- 'projects' | 'notes' | 'snippets'
 
-  description_note_id TEXT,    -- optional: project description
+  description_note_id TEXT,    -- optional: projects description
 
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
@@ -41,7 +41,7 @@ ON tree_nodes(parent_id, order_index);
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS tasks (
   id TEXT PRIMARY KEY,
-  node_id TEXT NOT NULL,       -- belongs to a tree_node (scope=project)
+  node_id TEXT NOT NULL,       -- belongs to a tree_node (scope=projects)
 
   title TEXT NOT NULL,
   status TEXT NOT NULL,        -- 'todo' | 'doing' | 'done'

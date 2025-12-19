@@ -1,5 +1,5 @@
 export const Scope = {
-  PROJECT: 'project',
+  PROJECTS: 'projects',
   NOTES: 'notes',
   SNIPPETS: 'snippets',
 } as const;
