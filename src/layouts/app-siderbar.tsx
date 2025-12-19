@@ -1,7 +1,7 @@
 "use client"
 
-import * as React from "react"
-import { Calendar, Notebook, FolderCode } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Calendar, Notebook, FolderCode, Plus } from "lucide-react"
 
 import {
   Sidebar,
@@ -18,8 +18,11 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
+import { Tree } from "@/components/ui/tree"
+
 import { cn } from "@/lib/utils"
 import { Scope } from "@/lib/types"
+import { treeApi } from "@/api"
 
 const groups = [
   {
@@ -44,8 +47,32 @@ const groups = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
-  const [activeItem, setActiveItem] = React.useState(groups[0])
+  const [activeItem, setActiveItem] = useState(groups[0])
   const { open, setOpen } = useSidebar()
+
+  const [treeData, setTreeData] = useState(null)
+
+  const createTreeNode = async () => {
+    const res = await treeApi.createTreeNode({
+      scope: activeItem.value,
+      parentId: null,
+      name: "分组1",
+    })
+    fetchTreeData()
+
+    console.log("🚀-fjf : res:", res);
+  }
+
+  const fetchTreeData = async () => {
+    const data = await treeApi.getTree(activeItem.value)
+    console.log("🚀-fjf : data:", data);
+    setTreeData(data)
+  }
+
+  useEffect(() => {
+    fetchTreeData()
+  }, [activeItem])
+
 
   return (
     <Sidebar
@@ -115,13 +142,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <div className="text-foreground text-base font-medium">
               {activeItem?.title}
             </div>
+            <Button
+              variant="outline"
+              size="icon"
+              className={cn("size-7")}
+              onClick={() => createTreeNode()}
+            >
+              <Plus color="red" />
+            </Button>
           </div>
           <SidebarInput placeholder="Type to search..." />
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup className="px-2">
             <SidebarGroupContent >
-              <div className="flex w-[260px] items-center gap-2"> {activeItem?.title} content goes here.</div>
+              <Tree data={treeData || []} />
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
