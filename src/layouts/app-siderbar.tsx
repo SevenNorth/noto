@@ -156,7 +156,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarContent>
           <SidebarGroup className="px-2">
             <SidebarGroupContent >
-              <Tree data={treeData || []} />
+              <Tree
+                data={treeData || []}
+              />
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
