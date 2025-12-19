@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { Tree } from "@/components/ui/tree"
+import NodeDialog from "@/widgets/NodeDialog"
 
 import { cn } from "@/lib/utils"
 import { Scope, TreeNode } from "@/lib/types"
@@ -61,7 +62,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const [treeData, setTreeData] = useState<TreeNode[]>([])
 
+  const [dialogOpen, setDialogOpen] = useState(false)
+
   const createTreeNode = async () => {
+    setDialogOpen(true)
     const res = await treeApi.createTreeNode({
       scope: activeItem.value,
       parentId: null,
@@ -225,6 +229,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
+      <NodeDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </Sidebar>
   )
 }
