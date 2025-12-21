@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog"
@@ -29,11 +28,12 @@ import type { TreeNode } from "@/lib/types"
 interface NodeDialogProps {
   node?: TreeNode | null
   open: boolean
+  isEdit?: boolean
   onOpenChange: (open: boolean) => void
   onSubmit?: (values: { name: string }, node?: TreeNode | null) => void
 }
 
-export function NodeDialog({ node = null, open, onOpenChange, onSubmit }: NodeDialogProps) {
+export function NodeDialog({ node = null, open, isEdit, onOpenChange, onSubmit }: NodeDialogProps) {
   const form = useForm<{ name: string }>({
     defaultValues: {
       name: node?.label ?? "",
@@ -46,19 +46,17 @@ export function NodeDialog({ node = null, open, onOpenChange, onSubmit }: NodeDi
   }, [node, open])
 
   const handleSubmit = (values: { name: string }) => {
-    console.log("NodeDialog submit:", values, node)
     onSubmit?.(values, node)
     onOpenChange(false)
   }
 
-  const title = node?.id ? `编辑节点 - ${node.id}` : "新建节点"
+  const title = isEdit ? `编辑` : "新建"
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>编辑节点的名称。当前仅支持修改 name 字段。</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>

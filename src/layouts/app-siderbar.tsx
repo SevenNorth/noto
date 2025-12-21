@@ -64,17 +64,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const [dialogOpen, setDialogOpen] = useState(false)
 
-  const createTreeNode = async () => {
-    setDialogOpen(true)
-    const res = await treeApi.createTreeNode({
-      scope: activeItem.value,
-      parentId: null,
-      name: "分组1",
-    })
-    fetchTreeData()
-
-    console.log("🚀-fjf : res:", res);
-  }
+  const [isEdit, setIsEdit] = useState(false)
+  const [curNode, setCurNode] = useState<TreeNode | null>(null)
 
   const fetchTreeData = async () => {
     const data = await treeApi.getTree(activeItem.value)
@@ -85,6 +76,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   useEffect(() => {
     fetchTreeData()
   }, [activeItem])
+
+  const handleSubmit = async (values: { name: string }, node?: TreeNode | null) => {
+    if (isEdit) {
+        await treeApi.updateTreeNode({
+        nodeId: node.id,
+        name: values.name,
+      })
+    } else {
+      console.log("🚀 ~ handleSubmit ~ node:", node)
+      await treeApi.createTreeNode({
+        name: values.name,
+        scope: activeItem.value,
+        parentId: node ? node.id : null,
+      })
+    }
+    fetchTreeData()
+  }
 
 
   const renderActions = (node: TreeNode) => {
@@ -107,7 +115,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <DropdownMenuContent side="bottom" align="start">
           <DropdownMenuItem
             onClick={() => {
-              console.log("新增", node.id)
+              setCurNode(node)
+              setIsEdit(false)
+              setDialogOpen(true)
             }}
           >
             <Plus className="size-4" />
@@ -116,7 +126,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
           <DropdownMenuItem
             onClick={() => {
-              console.log("编辑", node.id)
+              setCurNode(node)
+              setIsEdit(true)
+              setDialogOpen(true)
             }}
           >
             <Edit2 className="size-4" />
@@ -211,7 +223,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               variant="outline"
               size="icon"
               className={cn("size-7")}
-              onClick={() => createTreeNode()}
+              onClick={() => {
+                setCurNode(null)
+                setDialogOpen(true)
+              }}
             >
               <Plus color="red" />
             </Button>
@@ -232,6 +247,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <NodeDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
+        node={curNode}
+        isEdit={isEdit}
+        onSubmit={handleSubmit}
       />
     </Sidebar>
   )
