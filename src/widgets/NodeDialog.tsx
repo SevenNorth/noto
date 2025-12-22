@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
+  DialogDescription
 } from "@/components/ui/dialog"
 import {
   Form,
@@ -58,7 +59,7 @@ export function NodeDialog({ node = null, open, isEdit, onOpenChange, onSubmit }
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-
+        <DialogDescription />
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}

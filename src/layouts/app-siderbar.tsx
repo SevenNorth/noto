@@ -14,7 +14,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuAction,
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar"
@@ -32,25 +31,28 @@ import NodeDialog from "@/widgets/NodeDialog"
 
 import { cn } from "@/lib/utils"
 import { Scope, TreeNode } from "@/lib/types"
-import { treeApi } from "@/api"
+import { notesApi, treeApi } from "@/api"
 import { useConfirm } from "@/hooks/use-comfirm"
 
 const groups = [
   {
     title: "Notes",
     value: Scope.NOTES,
+    label: "笔记",
     icon: Notebook,
     isActive: true,
   },
   {
     title: "Snippets",
     value: Scope.SNIPPETS,
+    label: "代码片段",
     icon: FolderCode,
     isActive: false,
   },
   {
     title: "Projects",
     value: Scope.PROJECTS,
+    label: "项目",
     icon: Calendar,
     isActive: false,
   },
@@ -67,6 +69,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const [isEdit, setIsEdit] = useState(false)
   const [curNode, setCurNode] = useState<TreeNode | null>(null)
+  const [createLeaf, setCreateLeaf] = useState(false)
 
   const fetchTreeData = async () => {
     const data = await treeApi.getTree(activeItem.value)
@@ -110,6 +113,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   }
 
+  const handleCreateLeaf = async (values: { name: string }, node?: TreeNode | null) => {
+    await notesApi.createNote({
+      title: values.name,
+      parentId: node?.id,
+    })
+    fetchTreeData()
+  }
+
   const renderActions = (node: TreeNode) => {
     return (
       <DropdownMenu>
@@ -132,22 +143,37 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             onClick={() => {
               setCurNode(node)
               setIsEdit(false)
+              setCreateLeaf(false)
               setDialogOpen(true)
             }}
           >
             <Plus className="size-4" />
-            新增
+            新增目录
           </DropdownMenuItem>
 
           <DropdownMenuItem
             onClick={() => {
               setCurNode(node)
               setIsEdit(true)
+              setCreateLeaf(false)
               setDialogOpen(true)
             }}
           >
             <Edit2 className="size-4" />
-            编辑
+            编辑目录
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => {
+              setCurNode(node)
+              setIsEdit(false)
+              setCreateLeaf(true)
+              setDialogOpen(true)
+            }}
+          >
+            <Plus className="size-4" />
+            新增{activeItem.label}
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
@@ -264,7 +290,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         onOpenChange={setDialogOpen}
         node={curNode}
         isEdit={isEdit}
-        onSubmit={handleSubmit}
+        onSubmit={createLeaf ? handleCreateLeaf : handleSubmit}
       />
     </Sidebar>
   )
