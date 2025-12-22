@@ -48,12 +48,13 @@ pub fn insert_notes_tree_node(
             id,
             parent_id,
             name,
+            node_type,
             scope,
             order_index,
             created_at,
             updated_at
         )
-        VALUES (?, ?, ?, 'notes', ?, ?, ?)
+        VALUES (?, ?, ?, 'note', 'notes', ?, ?, ?)
         "#,
         params![node_id, parent_id, name, order_index, now, now],
     )?;
@@ -175,6 +176,7 @@ pub fn insert_tree_node(
     node_id: &str,
     parent_id: Option<&str>,
     name: &str,
+    node_type: &str,
     scope: &str,
     order_index: i64,
     now: i64,
@@ -185,14 +187,24 @@ pub fn insert_tree_node(
             id,
             parent_id,
             name,
+            node_type,
             scope,
             order_index,
             created_at,
             updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         "#,
-        params![node_id, parent_id, name, scope, order_index, now, now],
+        params![
+            node_id,
+            parent_id,
+            name,
+            node_type,
+            scope,
+            order_index,
+            now,
+            now
+        ],
     )?;
 
     Ok(())

@@ -11,6 +11,7 @@ pub struct TreeNode {
     pub id: String,
     pub parent_id: Option<String>,
     pub name: String,
+    pub node_type: String,
     pub scope: String,
     pub order_index: i64,
     pub description_note_id: Option<String>,
@@ -21,6 +22,7 @@ pub struct TreeNode {
 #[tauri::command(rename_all = "snake_case")]
 pub fn create_tree_node(
     name: String,
+    node_type: String,
     scope: String,
     parent_id: Option<String>,
     order_index: Option<i64>,
@@ -52,6 +54,7 @@ pub fn create_tree_node(
         &node_id,
         parent_id.as_deref(),
         &name,
+        &node_type,
         &scope,
         order,
         now,
@@ -178,11 +181,12 @@ pub fn list_tree_nodes(scope: Option<String>) -> Result<Vec<TreeNode>, String> {
                     id: r.get(0)?,
                     parent_id: r.get(1)?,
                     name: r.get(2)?,
-                    scope: r.get(3)?,
-                    order_index: r.get(4)?,
-                    description_note_id: r.get(5)?,
-                    created_at: r.get(6)?,
-                    updated_at: r.get(7)?,
+                    node_type: r.get(3)?,
+                    scope: r.get(4)?,
+                    order_index: r.get(5)?,
+                    description_note_id: r.get(6)?,
+                    created_at: r.get(7)?,
+                    updated_at: r.get(8)?,
                 })
             })
             .map_err(|e| e.to_string())?;
@@ -203,11 +207,12 @@ pub fn list_tree_nodes(scope: Option<String>) -> Result<Vec<TreeNode>, String> {
                     id: r.get(0)?,
                     parent_id: r.get(1)?,
                     name: r.get(2)?,
-                    scope: r.get(3)?,
-                    order_index: r.get(4)?,
-                    description_note_id: r.get(5)?,
-                    created_at: r.get(6)?,
-                    updated_at: r.get(7)?,
+                    node_type: r.get(3)?,
+                    scope: r.get(4)?,
+                    order_index: r.get(5)?,
+                    description_note_id: r.get(6)?,
+                    created_at: r.get(7)?,
+                    updated_at: r.get(8)?,
                 })
             })
             .map_err(|e| e.to_string())?;
