@@ -1,18 +1,30 @@
 import { NodeType as NodeTypeConst } from "@/lib/types";
-import type { FlatNode, TreeNode, NodeType } from "@/lib/types";
+import type { FlatNode, TreeNode, NodeType, ResourceType } from "@/lib/types";
 
 /**
  * Build nested tree from flat nodes. Returns roots array.
  * - nodes: flat array with id, parentId, name, orderIndex
  */
 export function buildTree(nodes: FlatNode[]): TreeNode[] {
-  const meta = new Map<string, { parent?: string | null; name: string; nodeType: NodeType; order: number }>()
+  const meta = new Map<
+    string,
+    {
+      parent?: string | null
+      name: string
+      nodeType: NodeType
+      order: number
+      resourceId?: string | null
+      resourceType?: ResourceType | null
+    }
+  >()
   for (const n of nodes) {
     meta.set(n.id, {
       parent: n.parentId ?? null,
       name: n.name,
       nodeType: n.nodeType,
       order: n.orderIndex ?? 0,
+      resourceId: n.resourceId ?? null,
+      resourceType: n.resourceType ?? null,
     })
   }
 
@@ -37,7 +49,13 @@ export function buildTree(nodes: FlatNode[]): TreeNode[] {
     if (visiting.has(id)) {
       // cycle detected: return node without children
       const m = meta.get(id)
-      const node: TreeNode = { id, label: m?.name ?? id, nodeType: m?.nodeType ?? NodeTypeConst.FOLDER }
+      const node: TreeNode = {
+        id,
+        label: m?.name ?? id,
+        nodeType: m?.nodeType ?? NodeTypeConst.FOLDER,
+        resourceId: m?.resourceId ?? null,
+        resourceType: m?.resourceType ?? null,
+      }
       built.set(id, node)
       return node
     }
@@ -50,7 +68,13 @@ export function buildTree(nodes: FlatNode[]): TreeNode[] {
     }
     visiting.delete(id)
 
-    const node: TreeNode = { id, label: m?.name ?? id, nodeType: m?.nodeType ?? NodeTypeConst.FOLDER }
+    const node: TreeNode = {
+      id,
+      label: m?.name ?? id,
+      nodeType: m?.nodeType ?? NodeTypeConst.FOLDER,
+      resourceId: m?.resourceId ?? null,
+      resourceType: m?.resourceType ?? null,
+    }
     if (children.length) node.children = children
     built.set(id, node)
     return node
@@ -72,4 +96,18 @@ export function buildTree(nodes: FlatNode[]): TreeNode[] {
   }
 
   return roots
+}
+
+/**
+ * 深度优先查找树节点
+ */
+export function findNodeById(nodes: TreeNode[], id: string): TreeNode | undefined {
+  for (const n of nodes) {
+    if (n.id === id) return n
+    if (n.children) {
+      const found = findNodeById(n.children, id)
+      if (found) return found
+    }
+  }
+  return undefined
 }

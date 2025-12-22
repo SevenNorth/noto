@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { Calendar, Notebook, FolderCode, Plus, MoreVertical, Edit2, Trash2 } from "lucide-react"
 
 import {
@@ -31,6 +32,7 @@ import NodeDialog from "@/widgets/NodeDialog"
 
 import { cn } from "@/lib/utils"
 import { NodeType, Scope, TreeNode } from "@/lib/types"
+import { findNodeById } from "@/lib/tree"
 import { notesApi, treeApi } from "@/api"
 import { useConfirm } from "@/hooks/use-comfirm"
 
@@ -62,6 +64,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const [activeItem, setActiveItem] = useState(groups[0])
   const { open, setOpen } = useSidebar()
+  const navigate = useNavigate()
 
   const [treeData, setTreeData] = useState<TreeNode[]>([])
 
@@ -70,6 +73,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [isEdit, setIsEdit] = useState(false)
   const [curNode, setCurNode] = useState<TreeNode | null>(null)
   const [createLeaf, setCreateLeaf] = useState(false)
+
+  const handleSelect = (id?: string) => {
+    if (!id) return
+    const node = findNodeById(treeData, id)
+    if (!node) return
+    if (node.nodeType === NodeType.NOTE && node.resourceId) {
+      navigate(`/notes/${node.resourceId}`)
+      return
+    }
+    if (node.nodeType === NodeType.SNIPPET && node.resourceId) {
+      navigate(`/snippets/${node.resourceId}`)
+      return
+    }
+    if (node.nodeType === NodeType.PROJECT) {
+      navigate(`/projects/${node.id}`)
+      return
+    }
+  }
 
   const fetchTreeData = async () => {
     const data = await treeApi.getTree(activeItem.value)
@@ -280,6 +301,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarGroupContent >
               <Tree
                 data={treeData || []}
+                onSelectedChange={handleSelect}
                 renderActions={renderActions}
               />
             </SidebarGroupContent>

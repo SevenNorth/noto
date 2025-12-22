@@ -15,6 +15,13 @@ export const NodeType = {
 
 export type NodeType = (typeof NodeType)[keyof typeof NodeType];
 
+export const ResourceType = {
+  NOTE: 'note',
+  SNIPPET: 'snippet',
+} as const;
+
+export type ResourceType = (typeof ResourceType)[keyof typeof ResourceType];
+
 export interface FlatNode {
   id: string
   parentId?: string | null
@@ -22,11 +29,15 @@ export interface FlatNode {
   nodeType: NodeType
   scope: Scope
   orderIndex?: number
+  resourceId?: string | null
+  resourceType?: ResourceType | null
 }
 
 export interface TreeNode {
   id: string
   label: string
   nodeType: NodeType
+  resourceId?: string | null
+  resourceType?: ResourceType | null
   children?: TreeNode[]
 }
