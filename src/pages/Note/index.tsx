@@ -9,13 +9,26 @@ import { toast } from "sonner"
 const Note = () => {
   const { id } = useParams<{ id: string }>()
 
-  const [content, setContent] = useState('# sa')
+  const [content, setContent] = useState('')
   const [title, setTitle] = useState('Untitled')
+  const [loading, setLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
-    // 简单初始化标题，可后续接入获取详情接口
-    setTitle(id ?? 'Untitled')
+    const fetch = async () => {
+      if (!id) return
+      try {
+        setLoading(true)
+        const detail = await notesApi.getNote(id)
+        setTitle(detail.title || 'Untitled')
+        setContent(detail.content || '')
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetch()
   }, [id])
 
   const handleTitleBlur = async () => {
@@ -37,8 +50,14 @@ const Note = () => {
     }
   }
 
-  const handleCreate = async () => {
-    await notesApi.createNote({ title: 'New Note' })
+  const handleSave = async () => {
+    if (!id) return
+    try {
+      await notesApi.updateNoteContent({ noteId: id, content })
+      toast.success("已保存")
+    } catch (err) {
+      console.error(err)
+    }
   }
 
   return (
@@ -53,7 +72,7 @@ const Note = () => {
           onKeyDown={handleTitleKeyDown}
           className="max-w-xl"
         />
-        <Button className="ml-4" onClick={handleCreate}>保存</Button>
+        <Button className="ml-4" onClick={handleSave}>保存</Button>
       </div>
 
       {/* 剩余空间 */}
@@ -61,6 +80,7 @@ const Note = () => {
         <MarkdownEditor
           value={content}
           onChange={setContent}
+          disabled={loading}
         />
       </div>
     </div>

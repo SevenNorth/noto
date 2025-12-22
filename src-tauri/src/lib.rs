@@ -4,8 +4,8 @@ mod db;
 mod fs;
 
 use commands::{
-    create_note, create_snippet, create_tree_node, delete_tree_node, list_tree_nodes,
-    list_tree_nodes_tree, update_note_title, update_tree_node,
+    create_note, create_snippet, create_tree_node, delete_tree_node, get_note, list_tree_nodes,
+    list_tree_nodes_tree, update_note_content, update_note_title, update_tree_node,
 };
 
 #[tauri::command]
@@ -32,6 +32,8 @@ pub fn run() {
             delete_tree_node,
             list_tree_nodes,
             list_tree_nodes_tree,
+            get_note,
+            update_note_content,
             update_note_title
         ])
         .run(tauri::generate_context!())

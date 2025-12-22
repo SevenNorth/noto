@@ -34,12 +34,31 @@ export interface UpdateNoteTitleParams {
   title: string;
 }
 
+export interface NoteDetail {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface UpdateNoteContentParams {
+  noteId: string;
+  content: string;
+}
+
 export const notesApi = {
   createNote: async (data: CreateNoteParams): Promise<void> => {
     return await invokeCommand<CreateNoteParams, void>("create_note", data);
   },
   updateNoteTitle: async (data: UpdateNoteTitleParams): Promise<void> => {
     return await invokeCommand<UpdateNoteTitleParams, void>("update_note_title", data);
+  },
+  getNote: async (noteId: string): Promise<NoteDetail> => {
+    return await invokeCommand<{ noteId: string }, NoteDetail>("get_note", { noteId });
+  },
+  updateNoteContent: async (data: UpdateNoteContentParams): Promise<void> => {
+    return await invokeCommand<UpdateNoteContentParams, void>("update_note_content", data);
   },
 };
 

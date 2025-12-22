@@ -6,6 +6,8 @@ use crate::db::connection::get_connection;
 use crate::db::models::{insert_node_note_resource, insert_note, insert_notes_tree_node};
 use crate::fs::notes::{create_note_file, delete_note_file};
 use rusqlite::params;
+use serde::Serialize;
+use std::fs;
 
 #[tauri::command(rename_all = "snake_case")]
 pub fn create_note(app: AppHandle, title: String, parent_id: Option<String>) -> Result<(), String> {
@@ -62,6 +64,47 @@ pub fn create_note(app: AppHandle, title: String, parent_id: Option<String>) -> 
     Ok(())
 }
 
+#[derive(Serialize)]
+pub struct NoteDetail {
+    pub id: String,
+    pub title: String,
+    pub content: String,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
+
+/// 获取笔记详情（标题 + 内容）
+#[tauri::command(rename_all = "snake_case")]
+pub fn get_note(note_id: String) -> Result<NoteDetail, String> {
+    let conn = get_connection().map_err(|e| e.to_string())?;
+
+    let mut stmt = conn
+        .prepare("SELECT id, title, content_path, created_at, updated_at FROM notes WHERE id = ?")
+        .map_err(|e| e.to_string())?;
+
+    let row = stmt
+        .query_row(params![note_id], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+                r.get::<_, i64>(3)?,
+                r.get::<_, i64>(4)?,
+            ))
+        })
+        .map_err(|e| e.to_string())?;
+
+    let content = fs::read_to_string(&row.2).map_err(|e| e.to_string())?;
+
+    Ok(NoteDetail {
+        id: row.0,
+        title: row.1,
+        content,
+        created_at: row.3,
+        updated_at: row.4,
+    })
+}
+
 /// 更新笔记标题，并同步树节点名称
 #[tauri::command(rename_all = "snake_case")]
 pub fn update_note_title(note_id: String, title: String) -> Result<(), String> {
@@ -91,5 +134,32 @@ pub fn update_note_title(note_id: String, title: String) -> Result<(), String> {
     .map_err(|e| e.to_string())?;
 
     tx.commit().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// 更新笔记内容，并更新 notes.updated_at
+#[tauri::command(rename_all = "snake_case")]
+pub fn update_note_content(note_id: String, content: String) -> Result<(), String> {
+    let now = chrono::Utc::now().timestamp();
+    let conn = get_connection().map_err(|e| e.to_string())?;
+
+    // 获取内容路径
+    let mut stmt = conn
+        .prepare("SELECT content_path FROM notes WHERE id = ?")
+        .map_err(|e| e.to_string())?;
+    let content_path: String = stmt
+        .query_row(params![note_id.clone()], |r| r.get(0))
+        .map_err(|e| e.to_string())?;
+
+    // 写文件
+    fs::write(&content_path, content).map_err(|e| e.to_string())?;
+
+    // 更新 updated_at
+    conn.execute(
+        "UPDATE notes SET updated_at = ? WHERE id = ?",
+        params![now, note_id],
+    )
+    .map_err(|e| e.to_string())?;
+
     Ok(())
 }

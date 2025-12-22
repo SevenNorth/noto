@@ -4,6 +4,8 @@ pub mod tasks;
 pub mod tree;
 
 pub use self::notes::create_note;
+pub use self::notes::get_note;
+pub use self::notes::update_note_content;
 pub use self::notes::update_note_title;
 pub use self::snippets::create_snippet;
 
