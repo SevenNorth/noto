@@ -12,6 +12,7 @@ const Note = () => {
   const [content, setContent] = useState('')
   const [title, setTitle] = useState('Untitled')
   const [loading, setLoading] = useState(false)
+  const [editingTitle, setEditingTitle] = useState(false)
   const inputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
@@ -32,15 +33,19 @@ const Note = () => {
   }, [id])
 
   const handleTitleBlur = async () => {
-    if (!id) return
+    if (!id) {
+      setEditingTitle(false)
+      return
+    }
     try {
       await notesApi.updateNoteTitle({ noteId: id, title })
       // 通知侧边树刷新
       window.dispatchEvent(new CustomEvent("tree:refresh"))
       toast.success("标题已更新")
     } catch (err) {
-      // 错误已在 invoke 包装里 toast，这里兜底
       console.error(err)
+    } finally {
+      setEditingTitle(false)
     }
   }
 
@@ -64,14 +69,28 @@ const Note = () => {
     <div className="h-screen flex flex-col p-4">
       {/* 固定区域 */}
       <div className="p-4 flex justify-between items-center gap-3">
-        <Input
-          ref={inputRef}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onBlur={handleTitleBlur}
-          onKeyDown={handleTitleKeyDown}
-          className="max-w-xl"
-        />
+        {editingTitle ? (
+          <Input
+            ref={inputRef}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onBlur={handleTitleBlur}
+            onKeyDown={handleTitleKeyDown}
+            className="max-w-xl"
+            autoFocus
+          />
+        ) : (
+          <span
+            className="max-w-xl truncate text-lg font-medium cursor-text"
+            onClick={() => {
+              setEditingTitle(true)
+              requestAnimationFrame(() => inputRef.current?.focus())
+            }}
+            title={title}
+          >
+            {title || "未命名"}
+          </span>
+        )}
         <Button className="ml-4" onClick={handleSave}>保存</Button>
       </div>
 
