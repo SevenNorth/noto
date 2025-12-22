@@ -84,6 +84,13 @@ function TreeItem({
           )}
         />
       )}
+      {!hasChildren && (
+        <div
+          className={cn(
+            "h-4 w-2 transition-transform",
+          )}
+        />
+      )}
 
       <span className="flex-1 truncate">
         {renderLabel ? renderLabel(node) : node.label}

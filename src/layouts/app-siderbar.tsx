@@ -33,6 +33,7 @@ import NodeDialog from "@/widgets/NodeDialog"
 import { cn } from "@/lib/utils"
 import { Scope, TreeNode } from "@/lib/types"
 import { treeApi } from "@/api"
+import { useConfirm } from "@/hooks/use-comfirm"
 
 const groups = [
   {
@@ -92,6 +93,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     fetchTreeData()
   }
 
+  const confirm = useConfirm()
+  const handleDelete = async (node: TreeNode) => {
+    const result = await confirm({
+      title: "确认删除？",
+      description: `删除后该节点下的所有子节点都会被删除，且无法恢复。`,
+      confirmText: "删除",
+      cancelText: "取消",
+      onConfirm: async () => {
+        await treeApi.deleteTreeNode(node.id)
+      },
+    })
+
+    if (result) {
+      fetchTreeData()
+    }
+  }
 
   const renderActions = (node: TreeNode) => {
     return (
@@ -138,7 +155,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <DropdownMenuItem
             variant="destructive"
             onClick={() => {
-              console.log("删除", node.id)
+              handleDelete(node)
             }}
           >
             <Trash2 className="size-4" />
