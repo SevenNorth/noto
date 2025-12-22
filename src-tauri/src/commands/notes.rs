@@ -6,7 +6,7 @@ use crate::db::connection::get_connection;
 use crate::db::models::{insert_node_note_resource, insert_note, insert_notes_tree_node};
 use crate::fs::notes::{create_note_file, delete_note_file};
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn create_note(app: AppHandle, title: String, parent_id: Option<String>) -> Result<(), String> {
     let now = chrono::Utc::now().timestamp();
 

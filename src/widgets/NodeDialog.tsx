@@ -36,13 +36,13 @@ interface NodeDialogProps {
 export function NodeDialog({ node = null, open, isEdit, onOpenChange, onSubmit }: NodeDialogProps) {
   const form = useForm<{ name: string }>({
     defaultValues: {
-      name: node?.label ?? "",
+      name: isEdit ? (node?.label ?? "") : "",
     },
   })
 
   // Reset form when the node or open changes
   useEffect(() => {
-    form.reset({ name: node?.label ?? "" })
+    form.reset({ name: isEdit ? (node?.label ?? "") : "" })
   }, [node, open])
 
   const handleSubmit = (values: { name: string }) => {
@@ -72,7 +72,7 @@ export function NodeDialog({ node = null, open, isEdit, onOpenChange, onSubmit }
                 <FormItem>
                   <FormLabel>名称</FormLabel>
                   <FormControl>
-                    <Input placeholder="请输入名称" {...field} />
+                    <Input placeholder="请输入名称" autoComplete="off" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

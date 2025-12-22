@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::db::connection::get_connection;
 use crate::db::models::{insert_node_snippet_resource, insert_snippet, insert_snippets_tree_node};
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn create_snippet(
     _app: AppHandle,
     title: String,

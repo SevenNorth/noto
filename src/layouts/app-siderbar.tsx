@@ -69,7 +69,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const fetchTreeData = async () => {
     const data = await treeApi.getTree(activeItem.value)
-    console.log("🚀-fjf : data:", data);
     setTreeData(data)
   }
 
@@ -79,12 +78,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const handleSubmit = async (values: { name: string }, node?: TreeNode | null) => {
     if (isEdit) {
-        await treeApi.updateTreeNode({
+      await treeApi.updateTreeNode({
         nodeId: node.id,
         name: values.name,
       })
     } else {
-      console.log("🚀 ~ handleSubmit ~ node:", node)
       await treeApi.createTreeNode({
         name: values.name,
         scope: activeItem.value,

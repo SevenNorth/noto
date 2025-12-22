@@ -18,7 +18,7 @@ pub struct TreeNode {
     pub updated_at: i64,
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn create_tree_node(
     name: String,
     scope: String,
@@ -63,7 +63,7 @@ pub fn create_tree_node(
     Ok(node_id)
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn update_tree_node(
     node_id: String,
     name: String,
@@ -115,7 +115,7 @@ pub fn update_tree_node(
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn delete_tree_node(node_id: String) -> Result<(), String> {
     let mut conn = get_connection().map_err(|e| e.to_string())?;
 
@@ -159,7 +159,7 @@ pub struct TreeResponseNode {
     pub children: Option<Vec<TreeResponseNode>>,
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn list_tree_nodes(scope: Option<String>) -> Result<Vec<TreeNode>, String> {
     let conn = get_connection().map_err(|e| e.to_string())?;
 
@@ -220,7 +220,7 @@ pub fn list_tree_nodes(scope: Option<String>) -> Result<Vec<TreeNode>, String> {
     Ok(nodes)
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub fn list_tree_nodes_tree(scope: Option<String>) -> Result<Vec<TreeResponseNode>, String> {
     let conn = get_connection().map_err(|e| e.to_string())?;
 
