@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { deepCamelToSnake, deepSnakeToCamel } from "@/lib/common";
-import type { FlatNode, TreeNode as TreeResponseNode } from "@/lib/types";
+import type { FlatNode, NodeType, TreeNode as TreeResponseNode } from "@/lib/types";
 import type { Scope } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -40,6 +40,7 @@ export const notesApi = {
  * ========================= */
 export interface CreateTreeNodeParams {
   name: string;
+  nodeType: NodeType;
   scope: Scope;
   parentId?: string | null;
   orderIndex?: number;

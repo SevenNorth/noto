@@ -1,13 +1,19 @@
-import type { FlatNode, TreeNode } from "./types";
+import { NodeType as NodeTypeConst } from "@/lib/types";
+import type { FlatNode, TreeNode, NodeType } from "@/lib/types";
 
 /**
  * Build nested tree from flat nodes. Returns roots array.
  * - nodes: flat array with id, parentId, name, orderIndex
  */
 export function buildTree(nodes: FlatNode[]): TreeNode[] {
-  const meta = new Map<string, { parent?: string | null; name: string; order: number }>()
+  const meta = new Map<string, { parent?: string | null; name: string; nodeType: NodeType; order: number }>()
   for (const n of nodes) {
-    meta.set(n.id, { parent: n.parentId ?? null, name: n.name, order: n.orderIndex ?? 0 })
+    meta.set(n.id, {
+      parent: n.parentId ?? null,
+      name: n.name,
+      nodeType: n.nodeType,
+      order: n.orderIndex ?? 0,
+    })
   }
 
   const childrenMap = new Map<string | null, string[]>()
@@ -31,7 +37,7 @@ export function buildTree(nodes: FlatNode[]): TreeNode[] {
     if (visiting.has(id)) {
       // cycle detected: return node without children
       const m = meta.get(id)
-      const node: TreeNode = { id, label: m?.name ?? id }
+      const node: TreeNode = { id, label: m?.name ?? id, nodeType: m?.nodeType ?? NodeTypeConst.FOLDER }
       built.set(id, node)
       return node
     }
@@ -44,7 +50,7 @@ export function buildTree(nodes: FlatNode[]): TreeNode[] {
     }
     visiting.delete(id)
 
-    const node: TreeNode = { id, label: m?.name ?? id }
+    const node: TreeNode = { id, label: m?.name ?? id, nodeType: m?.nodeType ?? NodeTypeConst.FOLDER }
     if (children.length) node.children = children
     built.set(id, node)
     return node

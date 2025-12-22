@@ -30,7 +30,7 @@ import { Tree } from "@/components/ui/tree"
 import NodeDialog from "@/widgets/NodeDialog"
 
 import { cn } from "@/lib/utils"
-import { Scope, TreeNode } from "@/lib/types"
+import { NodeType, Scope, TreeNode } from "@/lib/types"
 import { notesApi, treeApi } from "@/api"
 import { useConfirm } from "@/hooks/use-comfirm"
 
@@ -89,6 +89,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     } else {
       await treeApi.createTreeNode({
         name: values.name,
+        nodeType: NodeType.FOLDER,
         scope: activeItem.value,
         parentId: node ? node.id : null,
       })

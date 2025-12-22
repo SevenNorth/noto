@@ -159,6 +159,7 @@ pub fn delete_tree_node(node_id: String) -> Result<(), String> {
 pub struct TreeResponseNode {
     pub id: String,
     pub label: String,
+    pub node_type: String,
     pub children: Option<Vec<TreeResponseNode>>,
 }
 
@@ -171,7 +172,7 @@ pub fn list_tree_nodes(scope: Option<String>) -> Result<Vec<TreeNode>, String> {
     if let Some(s) = scope {
         let mut stmt = conn
             .prepare(
-                "SELECT id, parent_id, name, scope, order_index, description_note_id, created_at, updated_at FROM tree_nodes WHERE scope = ? ORDER BY parent_id, order_index",
+                "SELECT id, parent_id, name, node_type, scope, order_index, description_note_id, created_at, updated_at FROM tree_nodes WHERE scope = ? ORDER BY parent_id, order_index",
             )
             .map_err(|e| e.to_string())?;
 
@@ -197,7 +198,7 @@ pub fn list_tree_nodes(scope: Option<String>) -> Result<Vec<TreeNode>, String> {
     } else {
         let mut stmt = conn
             .prepare(
-                "SELECT id, parent_id, name, scope, order_index, description_note_id, created_at, updated_at FROM tree_nodes ORDER BY parent_id, order_index",
+                "SELECT id, parent_id, name, node_type, scope, order_index, description_note_id, created_at, updated_at FROM tree_nodes ORDER BY parent_id, order_index",
             )
             .map_err(|e| e.to_string())?;
 
@@ -230,14 +231,14 @@ pub fn list_tree_nodes_tree(scope: Option<String>) -> Result<Vec<TreeResponseNod
     let conn = get_connection().map_err(|e| e.to_string())?;
 
     // 读取扁平节点
-    let mut rows: Vec<(String, Option<String>, String, i64)> = Vec::new();
+    let mut rows: Vec<(String, Option<String>, String, String, i64)> = Vec::new();
     if let Some(s) = scope {
         let mut stmt = conn
-            .prepare("SELECT id, parent_id, name, order_index FROM tree_nodes WHERE scope = ?")
+            .prepare("SELECT id, parent_id, name, node_type, order_index FROM tree_nodes WHERE scope = ?")
             .map_err(|e| e.to_string())?;
         let mapped = stmt
             .query_map(params![s], |r| {
-                Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?))
+                Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?))
             })
             .map_err(|e| e.to_string())?;
         for row in mapped {
@@ -245,10 +246,12 @@ pub fn list_tree_nodes_tree(scope: Option<String>) -> Result<Vec<TreeResponseNod
         }
     } else {
         let mut stmt = conn
-            .prepare("SELECT id, parent_id, name, order_index FROM tree_nodes")
+            .prepare("SELECT id, parent_id, name, node_type, order_index FROM tree_nodes")
             .map_err(|e| e.to_string())?;
         let mapped = stmt
-            .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))
+            .query_map([], |r| {
+                Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?))
+            })
             .map_err(|e| e.to_string())?;
         for row in mapped {
             rows.push(row.map_err(|e| e.to_string())?);
@@ -257,15 +260,18 @@ pub fn list_tree_nodes_tree(scope: Option<String>) -> Result<Vec<TreeResponseNod
 
     use std::collections::HashMap;
 
-    // 构建 id -> (name, parent, order)
-    let mut meta: HashMap<String, (Option<String>, String, i64)> = HashMap::new();
-    for (id, parent, name, order) in rows.iter() {
-        meta.insert(id.clone(), (parent.clone(), name.clone(), *order));
+    // 构建 id -> (name, parent, node_type, order)
+    let mut meta: HashMap<String, (Option<String>, String, String, i64)> = HashMap::new();
+    for (id, parent, name, node_type, order) in rows.iter() {
+        meta.insert(
+            id.clone(),
+            (parent.clone(), name.clone(), node_type.clone(), *order),
+        );
     }
 
     // parent -> children ids
     let mut children_map: HashMap<Option<String>, Vec<String>> = HashMap::new();
-    for (id, parent, _name, _order) in rows.iter() {
+    for (id, parent, _name, _node_type, _order) in rows.iter() {
         children_map
             .entry(parent.clone())
             .or_default()
@@ -274,13 +280,13 @@ pub fn list_tree_nodes_tree(scope: Option<String>) -> Result<Vec<TreeResponseNod
 
     // sort children by order_index
     for (_parent, child_ids) in children_map.iter_mut() {
-        child_ids.sort_by_key(|cid| meta.get(cid).map(|t| t.2).unwrap_or(0));
+        child_ids.sort_by_key(|cid| meta.get(cid).map(|t| t.3).unwrap_or(0));
     }
 
     // build nodes recursively with cycle protection
     fn build(
         id: &String,
-        meta: &HashMap<String, (Option<String>, String, i64)>,
+        meta: &HashMap<String, (Option<String>, String, String, i64)>,
         children_map: &HashMap<Option<String>, Vec<String>>,
         visiting: &mut std::collections::HashSet<String>,
     ) -> TreeResponseNode {
@@ -289,12 +295,14 @@ pub fn list_tree_nodes_tree(scope: Option<String>) -> Result<Vec<TreeResponseNod
             return TreeResponseNode {
                 id: id.clone(),
                 label: meta.get(id).map(|t| t.1.clone()).unwrap_or_default(),
+                node_type: meta.get(id).map(|t| t.2.clone()).unwrap_or_default(),
                 children: None,
             };
         }
         visiting.insert(id.clone());
 
         let label = meta.get(id).map(|t| t.1.clone()).unwrap_or_default();
+        let node_type = meta.get(id).map(|t| t.2.clone()).unwrap_or_default();
         let child_ids = children_map.get(&Some(id.clone()));
         let mut children_vec: Vec<TreeResponseNode> = Vec::new();
         if let Some(child_ids) = child_ids {
@@ -308,6 +316,7 @@ pub fn list_tree_nodes_tree(scope: Option<String>) -> Result<Vec<TreeResponseNod
         TreeResponseNode {
             id: id.clone(),
             label,
+            node_type,
             children: if children_vec.is_empty() {
                 None
             } else {
@@ -326,13 +335,13 @@ pub fn list_tree_nodes_tree(scope: Option<String>) -> Result<Vec<TreeResponseNod
     } else {
         // No explicit roots: treat nodes without parent or invalid parent as roots
         let mut root_candidates: Vec<String> = Vec::new();
-        for (id, (parent, _name, _order)) in meta.iter() {
+        for (id, (parent, _name, _node_type, _order)) in meta.iter() {
             if parent.is_none() || !meta.contains_key(parent.as_ref().unwrap()) {
                 root_candidates.push(id.clone());
             }
         }
         let mut visiting = std::collections::HashSet::new();
-        root_candidates.sort_by_key(|id| meta.get(id).map(|t| t.2).unwrap_or(0));
+        root_candidates.sort_by_key(|id| meta.get(id).map(|t| t.3).unwrap_or(0));
         for rid in root_candidates {
             roots.push(build(&rid, &meta, &children_map, &mut visiting));
         }
