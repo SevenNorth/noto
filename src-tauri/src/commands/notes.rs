@@ -5,6 +5,7 @@ use uuid::Uuid;
 use crate::db::connection::get_connection;
 use crate::db::models::{insert_node_note_resource, insert_note, insert_notes_tree_node};
 use crate::fs::notes::{create_note_file, delete_note_file};
+use rusqlite::params;
 
 #[tauri::command(rename_all = "snake_case")]
 pub fn create_note(app: AppHandle, title: String, parent_id: Option<String>) -> Result<(), String> {
@@ -58,5 +59,37 @@ pub fn create_note(app: AppHandle, title: String, parent_id: Option<String>) -> 
         return Err(e.to_string());
     }
 
+    Ok(())
+}
+
+/// 更新笔记标题，并同步树节点名称
+#[tauri::command(rename_all = "snake_case")]
+pub fn update_note_title(note_id: String, title: String) -> Result<(), String> {
+    let now = chrono::Utc::now().timestamp();
+    let mut conn = get_connection().map_err(|e| e.to_string())?;
+    let tx = conn.transaction().map_err(|e| e.to_string())?;
+
+    // 1) 更新 notes 标题/更新时间
+    tx.execute(
+        "UPDATE notes SET title = ?, updated_at = ? WHERE id = ?",
+        params![title, now, note_id],
+    )
+    .map_err(|e| e.to_string())?;
+
+    // 2) 找到挂载该 note 的树节点并同步名称/更新时间
+    tx.execute(
+        r#"
+        UPDATE tree_nodes
+        SET name = ?, updated_at = ?
+        WHERE id IN (
+            SELECT node_id FROM node_resources
+            WHERE resource_type = 'note' AND resource_id = ?
+        )
+        "#,
+        params![title, now, note_id],
+    )
+    .map_err(|e| e.to_string())?;
+
+    tx.commit().map_err(|e| e.to_string())?;
     Ok(())
 }

@@ -29,9 +29,17 @@ export interface CreateNoteParams {
   parentId?: string;
 }
 
+export interface UpdateNoteTitleParams {
+  noteId: string;
+  title: string;
+}
+
 export const notesApi = {
   createNote: async (data: CreateNoteParams): Promise<void> => {
     return await invokeCommand<CreateNoteParams, void>("create_note", data);
+  },
+  updateNoteTitle: async (data: UpdateNoteTitleParams): Promise<void> => {
+    return await invokeCommand<UpdateNoteTitleParams, void>("update_note_title", data);
   },
 };
 

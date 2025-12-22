@@ -67,6 +67,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navigate = useNavigate()
 
   const [treeData, setTreeData] = useState<TreeNode[]>([])
+  const [selectedId, setSelectedId] = useState<string | undefined>(undefined)
 
   const [dialogOpen, setDialogOpen] = useState(false)
 
@@ -78,6 +79,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     if (!id) return
     const node = findNodeById(treeData, id)
     if (!node) return
+    setSelectedId(id)
     if (node.nodeType === NodeType.NOTE && node.resourceId) {
       navigate(`/notes/${node.resourceId}`)
       return
@@ -100,6 +102,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   useEffect(() => {
     fetchTreeData()
   }, [activeItem])
+
+  useEffect(() => {
+    const handler = () => fetchTreeData()
+    window.addEventListener("tree:refresh", handler)
+    return () => window.removeEventListener("tree:refresh", handler)
+  }, [])
 
   const handleSubmit = async (values: { name: string }, node?: TreeNode | null) => {
     if (isEdit) {
@@ -301,6 +309,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarGroupContent >
               <Tree
                 data={treeData || []}
+                selectedId={selectedId}
                 onSelectedChange={handleSelect}
                 renderActions={renderActions}
               />
