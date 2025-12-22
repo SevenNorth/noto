@@ -4,8 +4,9 @@ mod db;
 mod fs;
 
 use commands::{
-    create_note, create_snippet, create_tree_node, delete_tree_node, get_note, list_tree_nodes,
-    list_tree_nodes_tree, update_note_content, update_note_title, update_tree_node,
+    create_note, create_snippet, create_tree_node, delete_snippet_only, delete_tree_node,
+    get_note, get_snippet_detail, list_tree_nodes, list_tree_nodes_tree, update_note_content,
+    update_note_title, update_snippet_detail, update_tree_node,
 };
 
 #[tauri::command]
@@ -27,6 +28,9 @@ pub fn run() {
             greet,
             create_note,
             create_snippet,
+            get_snippet_detail,
+            update_snippet_detail,
+            delete_snippet_only,
             create_tree_node,
             update_tree_node,
             delete_tree_node,

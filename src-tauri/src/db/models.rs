@@ -116,6 +116,66 @@ pub fn insert_snippet(
     Ok(())
 }
 
+/// 获取单个 snippet 详情
+pub fn get_snippet(
+    tx: &Transaction,
+    snippet_id: &str,
+) -> rusqlite::Result<(String, String, Option<String>, String, i64, i64)> {
+    let mut stmt = tx.prepare(
+        r#"
+        SELECT id, title, language, content, created_at, updated_at
+        FROM snippets
+        WHERE id = ?
+        "#,
+    )?;
+
+    let row = stmt.query_row(params![snippet_id], |r| {
+        Ok((
+            r.get(0)?,
+            r.get(1)?,
+            r.get(2)?,
+            r.get(3)?,
+            r.get(4)?,
+            r.get(5)?,
+        ))
+    })?;
+
+    Ok(row)
+}
+
+/// 更新 snippet 的基础信息（标题 / 语言 / 内容）
+pub fn update_snippet(
+    tx: &Transaction,
+    snippet_id: &str,
+    title: &str,
+    language: Option<&str>,
+    content: &str,
+    now: i64,
+) -> rusqlite::Result<()> {
+    tx.execute(
+        r#"
+        UPDATE snippets
+        SET title = ?, language = ?, content = ?, updated_at = ?
+        WHERE id = ?
+        "#,
+        params![title, language, content, now, snippet_id],
+    )?;
+
+    Ok(())
+}
+
+/// 删除 snippet 本体（不包含 tree / node_resources）
+pub fn delete_snippet(tx: &Transaction, snippet_id: &str) -> rusqlite::Result<()> {
+    tx.execute(
+        r#"
+        DELETE FROM snippets WHERE id = ?
+        "#,
+        params![snippet_id],
+    )?;
+
+    Ok(())
+}
+
 /// 插入一个 tree_node（Snippets Scope）
 ///
 /// 约定：
