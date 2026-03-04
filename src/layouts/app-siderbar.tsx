@@ -322,17 +322,42 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <div className="text-foreground text-base font-medium">
               {activeItem?.title}
             </div>
-            <Button
-              variant="outline"
-              size="icon"
-              className={cn("size-7")}
-              onClick={() => {
-                setCurNode(null)
-                setDialogOpen(true)
-              }}
-            >
-              <Plus color="red" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className={cn("size-7")}
+                >
+                  <Plus color="red" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="bottom" align="end">
+                <DropdownMenuItem
+                  onClick={() => {
+                    setCurNode(null)
+                    setIsEdit(false)
+                    setCreateLeaf(false)
+                    setDialogOpen(true)
+                  }}
+                >
+                  <Folder className="size-4" />
+                  创建目录
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    setCurNode(null)
+                    setIsEdit(false)
+                    setCreateLeaf(true)
+                    setDialogOpen(true)
+                  }}
+                >
+                  <Plus className="size-4" />
+                  创建{activeItem.label}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <SidebarInput placeholder="Type to search..." />
         </SidebarHeader>
