@@ -302,3 +302,59 @@ pub fn delete_tree_node(tx: &Transaction, node_id: &str) -> rusqlite::Result<()>
 
     Ok(())
 }
+
+/// 删除节点的所有挂载资源（只删除 node_resources 表中的关联记录）
+pub fn delete_node_resources(tx: &Transaction, node_id: &str) -> rusqlite::Result<()> {
+    tx.execute(
+        r#"
+        DELETE FROM node_resources WHERE node_id = ?
+        "#,
+        params![node_id],
+    )?;
+
+    Ok(())
+}
+
+/// 获取节点的所有挂载资源
+pub fn get_node_resources(
+    tx: &Transaction,
+    node_id: &str,
+) -> rusqlite::Result<Vec<(String, String)>> {
+    let mut stmt = tx.prepare(
+        r#"
+        SELECT resource_id, resource_type FROM node_resources WHERE node_id = ?
+        "#,
+    )?;
+
+    let rows = stmt.query_map(params![node_id], |r| {
+        Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?))
+    })?;
+
+    let mut resources = Vec::new();
+    for row in rows {
+        resources.push(row?);
+    }
+
+    Ok(resources)
+}
+
+/// 获取 note 的详细信息（包括文件路径）
+pub fn get_note_detail(tx: &Transaction, note_id: &str) -> rusqlite::Result<(String, String)> {
+    let mut stmt = tx.prepare(
+        r#"
+        SELECT id, content_path FROM notes WHERE id = ?
+        "#,
+    )?;
+
+    let row = stmt.query_row(params![note_id], |r| {
+        Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?))
+    })?;
+
+    Ok(row)
+}
+
+/// 删除指定的 note 记录
+pub fn delete_note(tx: &Transaction, note_id: &str) -> rusqlite::Result<()> {
+    tx.execute("DELETE FROM notes WHERE id = ?", params![note_id])?;
+    Ok(())
+}

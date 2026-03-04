@@ -137,22 +137,44 @@ pub fn delete_tree_node(node_id: String) -> Result<(), String> {
         }
     }
 
-    // 检查是否有挂载资源
-    {
-        let mut stmt2 = conn
-            .prepare("SELECT COUNT(1) FROM node_resources WHERE node_id = ?")
-            .map_err(|e| e.to_string())?;
-        let res_count: i64 = stmt2
-            .query_row(params![&node_id], |r| r.get(0))
-            .map_err(|e| e.to_string())?;
-        if res_count > 0 {
-            return Err("node has resources mounted, remove them first".to_string());
+    let tx = conn.transaction().map_err(|e| e.to_string())?;
+
+    // 获取节点的所有挂载资源
+    let resources = db_models::get_node_resources(&tx, &node_id).map_err(|e| e.to_string())?;
+
+    // 保存要删除的文件路径列表
+    let mut files_to_delete: Vec<String> = Vec::new();
+
+    // 删除每个资源的数据库记录，同时记录文件路径
+    for (resource_id, resource_type) in &resources {
+        match resource_type.as_str() {
+            "note" => {
+                // 获取 note 的文件路径
+                if let Ok((_id, content_path)) = db_models::get_note_detail(&tx, resource_id) {
+                    files_to_delete.push(content_path);
+                }
+                // 删除 note 记录
+                db_models::delete_note(&tx, resource_id).map_err(|e| e.to_string())?;
+            }
+            "snippet" => {
+                // 删除 snippet 记录
+                db_models::delete_snippet(&tx, resource_id).map_err(|e| e.to_string())?;
+            }
+            _ => {}
         }
     }
 
-    let tx = conn.transaction().map_err(|e| e.to_string())?;
+    // 删除节点挂载的所有资源关联
+    db_models::delete_node_resources(&tx, &node_id).map_err(|e| e.to_string())?;
+
+    // 删除节点本身
     db_models::delete_tree_node(&tx, &node_id).map_err(|e| e.to_string())?;
     tx.commit().map_err(|e| e.to_string())?;
+
+    // 删除对应的文件（在事务提交后）
+    for file_path in files_to_delete {
+        let _ = std::fs::remove_file(&file_path);
+    }
 
     Ok(())
 }
