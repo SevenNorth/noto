@@ -123,52 +123,66 @@ pub fn update_tree_node(
 #[tauri::command(rename_all = "snake_case")]
 pub fn delete_tree_node(node_id: String) -> Result<(), String> {
     let mut conn = get_connection().map_err(|e| e.to_string())?;
-
-    // 检查是否有子节点
-    {
-        let mut stmt = conn
-            .prepare("SELECT COUNT(1) FROM tree_nodes WHERE parent_id = ?")
-            .map_err(|e| e.to_string())?;
-        let child_count: i64 = stmt
-            .query_row(params![&node_id], |r| r.get(0))
-            .map_err(|e| e.to_string())?;
-        if child_count > 0 {
-            return Err("node has child nodes, delete them first".to_string());
-        }
-    }
-
     let tx = conn.transaction().map_err(|e| e.to_string())?;
-
-    // 获取节点的所有挂载资源
-    let resources = db_models::get_node_resources(&tx, &node_id).map_err(|e| e.to_string())?;
 
     // 保存要删除的文件路径列表
     let mut files_to_delete: Vec<String> = Vec::new();
 
-    // 删除每个资源的数据库记录，同时记录文件路径
-    for (resource_id, resource_type) in &resources {
-        match resource_type.as_str() {
-            "note" => {
-                // 获取 note 的文件路径
-                if let Ok((_id, content_path)) = db_models::get_note_detail(&tx, resource_id) {
-                    files_to_delete.push(content_path);
-                }
-                // 删除 note 记录
-                db_models::delete_note(&tx, resource_id).map_err(|e| e.to_string())?;
-            }
-            "snippet" => {
-                // 删除 snippet 记录
-                db_models::delete_snippet(&tx, resource_id).map_err(|e| e.to_string())?;
-            }
-            _ => {}
+    // 递归删除节点及其所有子节点和资源
+    fn delete_node_recursive(
+        tx: &rusqlite::Transaction,
+        node_id: &str,
+        files_to_delete: &mut Vec<String>,
+    ) -> Result<(), String> {
+        // 获取所有直接子节点
+        let child_ids = db_models::get_child_node_ids(tx, node_id)
+            .map_err(|e| e.to_string())?;
+
+        // 递归删除所有子节点
+        for child_id in child_ids {
+            delete_node_recursive(tx, &child_id, files_to_delete)?;
         }
+
+        // 获取当前节点的所有挂载资源
+        let resources = db_models::get_node_resources(tx, node_id)
+            .map_err(|e| e.to_string())?;
+
+        // 删除每个资源的数据库记录，同时记录文件路径
+        for (resource_id, resource_type) in &resources {
+            match resource_type.as_str() {
+                "note" => {
+                    // 获取 note 的文件路径
+                    if let Ok((_id, content_path)) = db_models::get_note_detail(tx, resource_id) {
+                        files_to_delete.push(content_path);
+                    }
+                    // 删除 note 记录
+                    db_models::delete_note(tx, resource_id)
+                        .map_err(|e| e.to_string())?;
+                }
+                "snippet" => {
+                    // 删除 snippet 记录
+                    db_models::delete_snippet(tx, resource_id)
+                        .map_err(|e| e.to_string())?;
+                }
+                _ => {}
+            }
+        }
+
+        // 删除节点挂载的所有资源关联
+        db_models::delete_node_resources(tx, node_id)
+            .map_err(|e| e.to_string())?;
+
+        // 删除节点本身
+        db_models::delete_tree_node(tx, node_id)
+            .map_err(|e| e.to_string())?;
+
+        Ok(())
     }
 
-    // 删除节点挂载的所有资源关联
-    db_models::delete_node_resources(&tx, &node_id).map_err(|e| e.to_string())?;
+    // 执行递归删除
+    delete_node_recursive(&tx, &node_id, &mut files_to_delete)?;
 
-    // 删除节点本身
-    db_models::delete_tree_node(&tx, &node_id).map_err(|e| e.to_string())?;
+    // 提交事务
     tx.commit().map_err(|e| e.to_string())?;
 
     // 删除对应的文件（在事务提交后）

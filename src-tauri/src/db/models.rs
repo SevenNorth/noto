@@ -358,3 +358,17 @@ pub fn delete_note(tx: &Transaction, note_id: &str) -> rusqlite::Result<()> {
     tx.execute("DELETE FROM notes WHERE id = ?", params![note_id])?;
     Ok(())
 }
+
+/// 获取节点的所有直接子节点ID
+pub fn get_child_node_ids(tx: &Transaction, node_id: &str) -> rusqlite::Result<Vec<String>> {
+    let mut stmt = tx.prepare("SELECT id FROM tree_nodes WHERE parent_id = ?")?;
+
+    let rows = stmt.query_map(params![node_id], |r| r.get::<_, String>(0))?;
+
+    let mut child_ids = Vec::new();
+    for row in rows {
+        child_ids.push(row?);
+    }
+
+    Ok(child_ids)
+}
