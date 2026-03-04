@@ -4,6 +4,7 @@ import Home from "@/pages/Home";
 import Note from "@/pages/Note";
 import Snippet from "@/pages/Snippet";
 import Project from "@/pages/Project";
+import EmptyPage from "@/pages/Empty";
 
 const router = createBrowserRouter([
   {
@@ -24,6 +25,10 @@ const router = createBrowserRouter([
       {
         path: '/projects/:id',
         element: <Project />
+      },
+      {
+        path: '/empty',
+        element: <EmptyPage />
       }
     ],
   },

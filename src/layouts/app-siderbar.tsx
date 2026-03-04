@@ -92,6 +92,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       navigate(`/projects/${node.id}`)
       return
     }
+    if (node.nodeType === NodeType.FOLDER) {
+      // Do nothing for folder, just select it
+      navigate(`/empty`)
+      return
+    }
   }
 
   const fetchTreeData = async () => {
@@ -140,6 +145,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     if (result) {
       fetchTreeData()
+      navigate("/empty")
     }
   }
 
