@@ -1,8 +1,8 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Calendar, Notebook, FolderCode, Plus, MoreVertical, Edit2, Trash2 } from "lucide-react"
+import { Calendar, Notebook, Folder, FolderCode, Plus, MoreVertical, Edit2, Trash2 } from "lucide-react"
 
 import {
   Sidebar,
@@ -169,44 +169,50 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </DropdownMenuTrigger>
 
         <DropdownMenuContent side="bottom" align="start">
-          <DropdownMenuItem
-            onClick={() => {
-              setCurNode(node)
-              setIsEdit(false)
-              setCreateLeaf(false)
-              setDialogOpen(true)
-            }}
-          >
-            <Plus className="size-4" />
-            新增目录
-          </DropdownMenuItem>
+          {
+            node.nodeType === NodeType.FOLDER && (
+              <>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setCurNode(node)
+                    setIsEdit(false)
+                    setCreateLeaf(false)
+                    setDialogOpen(true)
+                  }}
+                >
+                  <Plus className="size-4" />
+                  新增目录
+                </DropdownMenuItem>
 
-          <DropdownMenuItem
-            onClick={() => {
-              setCurNode(node)
-              setIsEdit(true)
-              setCreateLeaf(false)
-              setDialogOpen(true)
-            }}
-          >
-            <Edit2 className="size-4" />
-            编辑目录
-          </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setCurNode(node)
+                    setIsEdit(true)
+                    setCreateLeaf(false)
+                    setDialogOpen(true)
+                  }}
+                >
+                  <Edit2 className="size-4" />
+                  编辑目录
+                </DropdownMenuItem>
 
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => {
-              setCurNode(node)
-              setIsEdit(false)
-              setCreateLeaf(true)
-              setDialogOpen(true)
-            }}
-          >
-            <Plus className="size-4" />
-            新增{activeItem.label}
-          </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    setCurNode(node)
+                    setIsEdit(false)
+                    setCreateLeaf(true)
+                    setDialogOpen(true)
+                  }}
+                >
+                  <Plus className="size-4" />
+                  新增{activeItem.label}
+                </DropdownMenuItem>
 
-          <DropdownMenuSeparator />
+                <DropdownMenuSeparator />
+              </>
+            )
+          }
 
           <DropdownMenuItem
             variant="destructive"
@@ -219,6 +225,32 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+    )
+  }
+  const renderLabel = (node: TreeNode) => {
+    let Icon: any = Folder
+    switch (node.nodeType) {
+      case NodeType.FOLDER:
+        Icon = Folder
+        break
+      case NodeType.NOTE:
+        Icon = Notebook
+        break
+      case NodeType.SNIPPET:
+        Icon = FolderCode
+        break
+      case NodeType.PROJECT:
+        Icon = Calendar
+        break
+      default:
+        Icon = Folder
+    }
+
+    return (
+      <div className="flex items-center gap-2">
+        <Icon className="size-4" />
+        <span>{node.label}</span>
+      </div>
     )
   }
 
@@ -312,6 +344,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 selectedId={selectedId}
                 onSelectedChange={handleSelect}
                 renderActions={renderActions}
+                renderLabel={renderLabel}
               />
             </SidebarGroupContent>
           </SidebarGroup>
