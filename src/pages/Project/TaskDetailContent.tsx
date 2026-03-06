@@ -19,6 +19,25 @@ interface TaskDetail {
 
 const STATUS_OPTIONS = ["todo", "doing", "done"] as const
 
+const normalizeTimestampToMillis = (timestamp: number): number =>
+  timestamp < 1_000_000_000_000 ? timestamp * 1000 : timestamp
+
+const toDateInputValue = (timestamp?: number | null): string => {
+  if (timestamp == null) return ""
+  const date = new Date(normalizeTimestampToMillis(timestamp))
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
+const fromDateInputValue = (value: string): number | undefined => {
+  if (!value) return undefined
+  const [year, month, day] = value.split("-").map(Number)
+  if (!year || !month || !day) return undefined
+  return Math.floor(new Date(year, month - 1, day).getTime() / 1000)
+}
+
 interface TaskDetailContentProps {
   currentTask: TaskDetail
   totalDuration: number
@@ -30,7 +49,6 @@ interface TaskDetailContentProps {
 
 export function TaskDetailContent({
   currentTask,
-  totalDuration,
   timeEntries,
   onTaskChange,
   onAddEntry,
@@ -39,6 +57,7 @@ export function TaskDetailContent({
   const [newEntryDate, setNewEntryDate] = useState(new Date().toISOString().split('T')[0])
   const [newEntryDesc, setNewEntryDesc] = useState("")
   const [newEntryDuration, setNewEntryDuration] = useState(0)
+  const dueDateValue = toDateInputValue(currentTask.dueDate)
   return (
     <div className="flex-1 overflow-auto">
       <div className="space-y-4 pr-4">
@@ -85,6 +104,17 @@ export function TaskDetailContent({
             value={currentTask.priority}
             onChange={(e) =>
               onTaskChange({ ...currentTask, priority: Number(e.target.value) })
+            }
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">截止时间</label>
+          <Input
+            type="date"
+            value={dueDateValue}
+            onChange={(e) =>
+              onTaskChange({ ...currentTask, dueDate: fromDateInputValue(e.target.value) })
             }
           />
         </div>
