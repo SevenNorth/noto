@@ -158,7 +158,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         await createSnippet(values, node)
         break
       case Scope.PROJECTS:
-        // TODO create project
+        await createProject(values, node)
         break
       default:
         break
@@ -178,6 +178,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: values.name,
       parentId: node?.id,
       content: "",
+    })
+    fetchTreeData()
+  }
+
+  const createProject = async (values: { name: string }, node?: TreeNode | null) => {
+    await treeApi.createTreeNode({
+      name: values.name,
+      nodeType: NodeType.PROJECT,
+      scope: activeItem.value,
+      parentId: node ? node.id : null,
+      orderIndex: 0,
     })
     fetchTreeData()
   }

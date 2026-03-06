@@ -143,3 +143,90 @@ export const snippetApi = {
     return await invokeCommand<{ snippetId: string }, void>("delete_snippet_only", { snippetId });
   },
 }
+/* =========================
+ * Tasks
+ * ========================= */
+export interface TaskDetail {
+  id: string;
+  nodeId: string;
+  title: string;
+  status: string;
+  priority: number;
+  dueDate?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface CreateTaskParams {
+  nodeId: string;
+  title: string;
+  status?: string;
+  priority?: number;
+  dueDate?: number;
+}
+
+export interface UpdateTaskParams {
+  taskId: string;
+  title?: string;
+  status?: string;
+  priority?: number;
+  dueDate?: number;
+}
+
+export const tasksApi = {
+  listTasks: async (nodeId: string): Promise<TaskDetail[]> => {
+    return await invokeCommand<{ nodeId: string }, TaskDetail[]>("list_tasks", { nodeId });
+  },
+
+  getTask: async (taskId: string): Promise<TaskDetail> => {
+    return await invokeCommand<{ taskId: string }, TaskDetail>("get_task", { taskId });
+  },
+
+  createTask: async (data: CreateTaskParams): Promise<string> => {
+    return await invokeCommand<CreateTaskParams, string>("create_task", data);
+  },
+
+  updateTask: async (data: UpdateTaskParams): Promise<void> => {
+    return await invokeCommand<UpdateTaskParams, void>("update_task", data);
+  },
+
+  deleteTask: async (taskId: string): Promise<void> => {
+    return await invokeCommand<{ taskId: string }, void>("delete_task", { taskId });
+  },
+};
+
+/* time entries (work logs) */
+export interface TimeEntry {
+  id: string;
+  taskId: string;
+  workDate: number;
+  duration: number;
+  description: string;
+  startTime?: number;
+  endTime?: number;
+  source: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface CreateTimeEntryParams {
+  taskId: string;
+  workDate: number;
+  duration: number;
+  description: string;
+  startTime?: number;
+  endTime?: number;
+  source?: string;
+}
+
+export const timeEntryApi = {
+  list: async (taskId: string): Promise<TimeEntry[]> => {
+    return await invokeCommand<{ taskId: string }, TimeEntry[]>("list_time_entries", { taskId });
+  },
+  create: async (data: CreateTimeEntryParams): Promise<string> => {
+    return await invokeCommand<CreateTimeEntryParams, string>("create_time_entry", data);
+  },
+  delete: async (entryId: string): Promise<void> => {
+    return await invokeCommand<{ entryId: string }, void>("delete_time_entry", { entryId });
+  },
+};
