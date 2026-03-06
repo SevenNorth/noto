@@ -16,6 +16,7 @@ interface TaskDetail {
   status: string
   priority: number
   dueDate?: number
+  description?: string
   createdAt: number
   updatedAt: number
   totalDuration: number
@@ -141,6 +142,7 @@ const Project = () => {
         status: currentTask.status,
         priority: currentTask.priority,
         dueDate: currentTask.dueDate,
+        description: currentTask.description,
       })
       toast.success("更新成功")
       loadTasks()
@@ -150,30 +152,28 @@ const Project = () => {
     }
   }
 
-  const handleAddEntry = async () => {
-    if (!currentTask || !newEntryDesc || newEntryDuration <= 0) return
+  const handleAddEntry = async (workDate: number, duration: number, description: string) => {
+    if (!currentTask || !description || duration <= 0) return
     try {
       await timeEntryApi.create({
         taskId: currentTask.id,
-        workDate: new Date(newEntryDate).getTime(),
-        duration: newEntryDuration,
-        description: newEntryDesc,
+        workDate,
+        duration,
+        description,
       })
-      setNewEntryDesc("")
-      setNewEntryDuration(0)
-      setNewEntryDate(new Date().toISOString().split('T')[0])
       loadTimeEntries(currentTask.id)
 
       // 更新任务的总耗时
       setTasks(tasks.map(t =>
         t.id === currentTask.id
-          ? { ...t, totalDuration: t.totalDuration + newEntryDuration }
+          ? { ...t, totalDuration: t.totalDuration + duration }
           : t
       ))
-      setTotalProjectDuration(prev => prev + newEntryDuration)
+      setTotalProjectDuration(prev => prev + duration)
 
       toast.success("记录已添加")
     } catch (err) {
+      console.log(err);
       toast.error("添加失败")
     }
   }
@@ -256,7 +256,7 @@ const Project = () => {
         {tasks.length > 0 && (
           <div className="p-3 bg-muted/50 rounded-lg border mt-2">
             <div className="text-sm font-medium text-center">
-              项目总耗时: {Math.floor(totalProjectDuration / 3600)}小时 {Math.floor((totalProjectDuration % 3600) / 60)}分钟
+              项目总耗时: {(totalProjectDuration / 3600).toFixed(1)}小时
             </div>
           </div>
         )}
@@ -274,13 +274,7 @@ const Project = () => {
               currentTask={currentTask}
               totalDuration={totalDuration}
               timeEntries={timeEntries}
-              newEntryDate={newEntryDate}
-              newEntryDesc={newEntryDesc}
-              newEntryDuration={newEntryDuration}
               onTaskChange={setCurrentTask}
-              onDateChange={setNewEntryDate}
-              onDescChange={setNewEntryDesc}
-              onDurationChange={setNewEntryDuration}
               onAddEntry={handleAddEntry}
               onDeleteTimeEntry={handleDeleteTimeEntry}
             />

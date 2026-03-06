@@ -19,17 +19,6 @@ pub struct TimeEntry {
     pub updated_at: i64,
 }
 
-#[derive(Deserialize)]
-pub struct CreateTimeEntryParams {
-    pub task_id: String,
-    pub work_date: i64,
-    pub duration: i64,
-    pub description: String,
-    pub start_time: Option<i64>,
-    pub end_time: Option<i64>,
-    pub source: Option<String>,
-}
-
 #[tauri::command(rename_all = "snake_case")]
 pub fn list_time_entries(task_id: String) -> Result<Vec<TimeEntry>, String> {
     let conn = get_connection().map_err(|e| e.to_string())?;
@@ -64,22 +53,30 @@ pub fn list_time_entries(task_id: String) -> Result<Vec<TimeEntry>, String> {
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub fn create_time_entry(params: CreateTimeEntryParams) -> Result<String, String> {
+pub fn create_time_entry(
+    task_id: String,
+    work_date: i64,
+    duration: i64,
+    description: String,
+    start_time: Option<i64>,
+    end_time: Option<i64>,
+    source: Option<String>,
+) -> Result<String, String> {
     let conn = get_connection().map_err(|e| e.to_string())?;
     let id = Uuid::new_v4().to_string();
     let now = Utc::now().timestamp_millis();
-    let source = params.source.unwrap_or_else(|| "manual".to_string());
+    let source = source.unwrap_or_else(|| "manual".to_string());
 
     conn.execute(
         "INSERT INTO time_entries (id, task_id, work_date, duration, description, start_time, end_time, source, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         params![
             id,
-            params.task_id,
-            params.work_date,
-            params.duration,
-            params.description,
-            params.start_time,
-            params.end_time,
+            task_id,
+            work_date,
+            duration,
+            description,
+            start_time,
+            end_time,
             source,
             now,
             now,

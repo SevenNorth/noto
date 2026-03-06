@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
@@ -10,6 +11,7 @@ interface TaskDetail {
   status: string
   priority: number
   dueDate?: number
+  description?: string
   createdAt: number
   updatedAt: number
   totalDuration: number
@@ -21,14 +23,8 @@ interface TaskDetailContentProps {
   currentTask: TaskDetail
   totalDuration: number
   timeEntries: any[]
-  newEntryDate: string
-  newEntryDesc: string
-  newEntryDuration: number
   onTaskChange: (task: TaskDetail) => void
-  onDateChange: (date: string) => void
-  onDescChange: (desc: string) => void
-  onDurationChange: (duration: number) => void
-  onAddEntry: () => void
+  onAddEntry: (workDate: number, duration: number, description: string) => void
   onDeleteTimeEntry: (entryId: string) => void
 }
 
@@ -36,27 +32,30 @@ export function TaskDetailContent({
   currentTask,
   totalDuration,
   timeEntries,
-  newEntryDate,
-  newEntryDesc,
-  newEntryDuration,
   onTaskChange,
-  onDateChange,
-  onDescChange,
-  onDurationChange,
   onAddEntry,
   onDeleteTimeEntry,
 }: TaskDetailContentProps) {
+  const [newEntryDate, setNewEntryDate] = useState(new Date().toISOString().split('T')[0])
+  const [newEntryDesc, setNewEntryDesc] = useState("")
+  const [newEntryDuration, setNewEntryDuration] = useState(0)
   return (
     <div className="flex-1 overflow-auto">
       <div className="space-y-4 pr-4">
-        <div className="text-sm text-muted-foreground">
-          已用时间: {totalDuration} 秒
-        </div>
         <div>
           <label className="block text-sm font-medium mb-1">标题</label>
           <Input
             value={currentTask.title}
             onChange={(e) => onTaskChange({ ...currentTask, title: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">描述</label>
+          <Input
+            placeholder="任务描述"
+            value={currentTask.description || ""}
+            onChange={(e) => onTaskChange({ ...currentTask, description: e.target.value })}
           />
         </div>
 
@@ -99,7 +98,7 @@ export function TaskDetailContent({
                 <div className="flex-1">
                   <div className="font-medium">{te.description}</div>
                   <div className="text-xs text-muted-foreground">
-                    {new Date(te.workDate).toLocaleDateString()} · {te.duration}秒
+                    {new Date(te.workDate).toLocaleDateString()} · {(te.duration / 3600).toFixed(1)}小时
                   </div>
                 </div>
                 <button
@@ -119,21 +118,23 @@ export function TaskDetailContent({
             <Input
               type="date"
               value={newEntryDate}
-              onChange={(e) => onDateChange(e.target.value)}
+              onChange={(e) => setNewEntryDate(e.target.value)}
             />
             <Input
               placeholder="说明"
               value={newEntryDesc}
-              onChange={(e) => onDescChange(e.target.value)}
+              onChange={(e) => setNewEntryDesc(e.target.value)}
             />
             <Input
               type="number"
-              placeholder="秒"
+              placeholder="小时"
               value={newEntryDuration}
-              onChange={(e) => onDurationChange(Number(e.target.value))}
+              onChange={(e) => setNewEntryDuration(Number(e.target.value))}
+              min={0}
+              step={0.5}
             />
           </div>
-          <Button className="mt-3 w-full" size="sm" onClick={onAddEntry}>添加记录</Button>
+          <Button className="mt-3 w-full" size="sm" onClick={() => onAddEntry(new Date(newEntryDate).getTime(), Math.round(newEntryDuration * 3600), newEntryDesc)}>添加记录</Button>
         </div>
       </div>
     </div>

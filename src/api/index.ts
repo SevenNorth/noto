@@ -171,6 +171,7 @@ export interface UpdateTaskParams {
   status?: string;
   priority?: number;
   dueDate?: number;
+  description?: string;
 }
 
 export const tasksApi = {

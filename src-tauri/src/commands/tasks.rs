@@ -14,6 +14,7 @@ pub struct TaskDetail {
     pub status: String,
     pub priority: i64,
     pub due_date: Option<i64>,
+    pub description: Option<String>,
     pub created_at: i64,
     pub updated_at: i64,
 }
@@ -24,7 +25,7 @@ pub fn list_tasks(node_id: String) -> Result<Vec<TaskDetail>, String> {
     let conn = get_connection().map_err(|e| e.to_string())?;
     let mut stmt = conn
         .prepare(
-            "SELECT id, node_id, title, status, priority, due_date, created_at, updated_at FROM tasks WHERE node_id = ? ORDER BY created_at DESC",
+            "SELECT id, node_id, title, status, priority, due_date, description, created_at, updated_at FROM tasks WHERE node_id = ? ORDER BY created_at DESC",
         )
         .map_err(|e| e.to_string())?;
 
@@ -37,8 +38,9 @@ pub fn list_tasks(node_id: String) -> Result<Vec<TaskDetail>, String> {
                 status: r.get(3)?,
                 priority: r.get(4)?,
                 due_date: r.get(5)?,
-                created_at: r.get(6)?,
-                updated_at: r.get(7)?,
+                description: r.get(6)?,
+                created_at: r.get(7)?,
+                updated_at: r.get(8)?,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -59,13 +61,14 @@ pub fn create_task(
     status: Option<String>,
     priority: Option<i64>,
     due_date: Option<i64>,
+    description: Option<String>,
 ) -> Result<String, String> {
     let now = Utc::now().timestamp();
     let task_id = Uuid::new_v4().to_string();
 
     let conn = get_connection().map_err(|e| e.to_string())?;
     conn.execute(
-        "INSERT INTO tasks (id, node_id, title, status, priority, due_date, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO tasks (id, node_id, title, status, priority, due_date, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         params![
             &task_id,
             &node_id,
@@ -73,6 +76,7 @@ pub fn create_task(
             status.unwrap_or_else(|| "todo".to_string()),
             priority.unwrap_or(0),
             due_date,
+            description,
             now,
             now,
         ],
@@ -87,7 +91,7 @@ pub fn create_task(
 pub fn get_task(task_id: String) -> Result<TaskDetail, String> {
     let conn = get_connection().map_err(|e| e.to_string())?;
     let mut stmt = conn
-        .prepare("SELECT id, node_id, title, status, priority, due_date, created_at, updated_at FROM tasks WHERE id = ?")
+        .prepare("SELECT id, node_id, title, status, priority, due_date, description, created_at, updated_at FROM tasks WHERE id = ?")
         .map_err(|e| e.to_string())?;
 
     let row = stmt
@@ -99,8 +103,9 @@ pub fn get_task(task_id: String) -> Result<TaskDetail, String> {
                 status: r.get(3)?,
                 priority: r.get(4)?,
                 due_date: r.get(5)?,
-                created_at: r.get(6)?,
-                updated_at: r.get(7)?,
+                description: r.get(6)?,
+                created_at: r.get(7)?,
+                updated_at: r.get(8)?,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -116,18 +121,20 @@ pub fn update_task(
     status: Option<String>,
     priority: Option<i64>,
     due_date: Option<i64>,
+    description: Option<String>,
 ) -> Result<(), String> {
     let now = Utc::now().timestamp();
     let conn = get_connection().map_err(|e| e.to_string())?;
 
     // simple update using COALESCE for optional fields
     conn.execute(
-        "UPDATE tasks SET title = COALESCE(?, title), status = COALESCE(?, status), priority = COALESCE(?, priority), due_date = ?, updated_at = ? WHERE id = ?",
+        "UPDATE tasks SET title = COALESCE(?, title), status = COALESCE(?, status), priority = COALESCE(?, priority), due_date = ?, description = ?, updated_at = ? WHERE id = ?",
         params![
             title,
             status,
             priority,
             due_date,
+            description,
             now,
             task_id,
         ],

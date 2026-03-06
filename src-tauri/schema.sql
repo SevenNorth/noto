@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   status TEXT NOT NULL,        -- 'todo' | 'doing' | 'done'
   priority INTEGER DEFAULT 0,
   due_date INTEGER,
+  description TEXT,
 
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
