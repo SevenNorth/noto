@@ -3,6 +3,7 @@ import { deepCamelToSnake, deepSnakeToCamel } from "@/lib/common";
 import type { FlatNode, NodeType, TreeNode as TreeResponseNode } from "@/lib/types";
 import type { Scope } from "@/lib/types";
 import { toast } from "sonner";
+import { create } from "domain";
 
 async function invokeCommand<TIn = any, TOut = any>(
   cmd: string,
@@ -101,3 +102,44 @@ export const treeApi = {
     return await invokeCommand<{ scope?: Scope }, FlatNode[]>("list_tree_nodes", { scope });
   },
 };
+
+export interface SnippetDetail {
+  id: string;
+  title: string;
+  language?: string;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface CreateSnippetParams {
+  title: string;
+  language?: string;
+  content: string;
+  parentId?: string;
+}
+
+export interface UpdateSnippetParams {
+  snippetId: string;
+  title: string;
+  language?: string;
+  content: string;
+};
+
+export const snippetApi = {
+  createSnippet: async (data: CreateSnippetParams): Promise<void> => {
+    return await invokeCommand<CreateSnippetParams, void>("create_snippet", data);
+  },
+
+  getSnippet: async (snippetId: string): Promise<SnippetDetail> => {
+    return await invokeCommand<{ snippetId: string }, SnippetDetail>("get_snippet_detail", { snippetId });
+  },
+
+  updateSnippet: async (data: UpdateSnippetParams): Promise<void> => {
+    return await invokeCommand<UpdateSnippetParams, void>("update_snippet_detail", data);
+  },
+
+  deleteSnippet: async (snippetId: string): Promise<void> => {
+    return await invokeCommand<{ snippetId: string }, void>("delete_snippet_only", { snippetId });
+  },
+}

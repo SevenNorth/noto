@@ -33,7 +33,7 @@ import NodeDialog from "@/widgets/NodeDialog"
 import { cn } from "@/lib/utils"
 import { NodeType, Scope, TreeNode } from "@/lib/types"
 import { findNodeById } from "@/lib/tree"
-import { notesApi, treeApi } from "@/api"
+import { notesApi, snippetApi, treeApi } from "@/api"
 import { useConfirm } from "@/hooks/use-comfirm"
 
 const groups = [
@@ -150,9 +150,34 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   const handleCreateLeaf = async (values: { name: string }, node?: TreeNode | null) => {
+    switch (activeItem.value) {
+      case Scope.NOTES:
+        await createNote(values, node)
+        break
+      case Scope.SNIPPETS:
+        await createSnippet(values, node)
+        break
+      case Scope.PROJECTS:
+        // TODO create project
+        break
+      default:
+        break
+    }
+  }
+
+  const createNote = async (values: { name: string }, node?: TreeNode | null) => {
     await notesApi.createNote({
       title: values.name,
       parentId: node?.id,
+    })
+    fetchTreeData()
+  }
+
+  const createSnippet = async (values: { name: string }, node?: TreeNode | null) => {
+    await snippetApi.createSnippet({
+      title: values.name,
+      parentId: node?.id,
+      content: "",
     })
     fetchTreeData()
   }

@@ -194,12 +194,13 @@ pub fn insert_snippets_tree_node(
             id,
             parent_id,
             name,
+            node_type,
             scope,
             order_index,
             created_at,
             updated_at
         )
-        VALUES (?, ?, ?, 'snippets', ?, ?, ?)
+        VALUES (?, ?, ?, 'snippet', 'snippets', ?, ?, ?)
         "#,
         params![node_id, parent_id, name, order_index, now, now],
     )?;
