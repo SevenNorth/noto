@@ -3,10 +3,11 @@ import { useEffect, useState } from "react"
 import { tasksApi, timeEntryApi } from "@/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from "@/components/ui/sheet"
 import { toast } from "sonner"
 import { X } from "lucide-react"
+import { useConfirm } from "@/hooks/use-comfirm"
+import { TaskDetailContent } from "./TaskDetailContent"
 
 interface TaskDetail {
   id: string
@@ -17,14 +18,14 @@ interface TaskDetail {
   dueDate?: number
   createdAt: number
   updatedAt: number
+  totalDuration: number
 }
-
-const STATUS_OPTIONS = ["todo", "doing", "done"] as const
 
 const Project = () => {
   const { id } = useParams<{ id: string }>()
   const [tasks, setTasks] = useState<TaskDetail[]>([])
   const [loading, setLoading] = useState(true)
+  const [totalProjectDuration, setTotalProjectDuration] = useState(0)
 
   const [newTitle, setNewTitle] = useState("")
 
@@ -36,12 +37,33 @@ const Project = () => {
   const [newEntryDuration, setNewEntryDuration] = useState(0)
   const [newEntryDate, setNewEntryDate] = useState(new Date().toISOString().split('T')[0])
 
+  const confirm = useConfirm()
+
   const loadTasks = async () => {
     if (!id) return
     setLoading(true)
     try {
       const list = await tasksApi.listTasks(id)
-      setTasks(list)
+
+      // 为每个任务计算总耗时
+      const tasksWithDuration = await Promise.all(
+        list.map(async (task) => {
+          try {
+            const timeEntries = await timeEntryApi.list(task.id)
+            const totalDuration = timeEntries.reduce((sum, entry) => sum + entry.duration, 0)
+            return { ...task, totalDuration }
+          } catch (err) {
+            console.error(`Failed to load time entries for task ${task.id}:`, err)
+            return { ...task, totalDuration: 0 }
+          }
+        })
+      )
+
+      setTasks(tasksWithDuration)
+
+      // 计算项目总耗时
+      const totalDuration = tasksWithDuration.reduce((sum, task) => sum + task.totalDuration, 0)
+      setTotalProjectDuration(totalDuration)
     } catch (err) {
       toast.error("获取任务列表失败")
     } finally {
@@ -62,6 +84,27 @@ const Project = () => {
       toast.success("任务创建成功")
     } catch (err) {
       toast.error("创建任务失败")
+    }
+  }
+
+  const handleDeleteTask = async (taskId: string) => {
+    const confirmed = await confirm({
+      title: "确认删除",
+      description: "此操作无法撤销，确定要删除这个任务吗？",
+      confirmText: "删除",
+      cancelText: "取消",
+    })
+    if (!confirmed) return
+    try {
+      const taskToDelete = tasks.find(t => t.id === taskId)
+      await tasksApi.deleteTask(taskId)
+      setTasks(tasks.filter(t => t.id !== taskId))
+      if (taskToDelete) {
+        setTotalProjectDuration(prev => prev - taskToDelete.totalDuration)
+      }
+      toast.success("任务已删除")
+    } catch (err) {
+      toast.error("删除任务失败")
     }
   }
 
@@ -120,6 +163,15 @@ const Project = () => {
       setNewEntryDuration(0)
       setNewEntryDate(new Date().toISOString().split('T')[0])
       loadTimeEntries(currentTask.id)
+
+      // 更新任务的总耗时
+      setTasks(tasks.map(t =>
+        t.id === currentTask.id
+          ? { ...t, totalDuration: t.totalDuration + newEntryDuration }
+          : t
+      ))
+      setTotalProjectDuration(prev => prev + newEntryDuration)
+
       toast.success("记录已添加")
     } catch (err) {
       toast.error("添加失败")
@@ -128,7 +180,19 @@ const Project = () => {
 
   const handleDeleteTimeEntry = async (entryId: string) => {
     try {
+      const entryToDelete = timeEntries.find(te => te.id === entryId)
       await timeEntryApi.delete(entryId)
+
+      if (entryToDelete && currentTask) {
+        // 更新任务的总耗时
+        setTasks(tasks.map(t =>
+          t.id === currentTask.id
+            ? { ...t, totalDuration: t.totalDuration - entryToDelete.duration }
+            : t
+        ))
+        setTotalProjectDuration(prev => prev - entryToDelete.duration)
+      }
+
       toast.success("时间消耗已删除")
       if (currentTask) {
         loadTimeEntries(currentTask.id)
@@ -153,22 +217,48 @@ const Project = () => {
         <Button onClick={handleCreate}>添加任务</Button>
       </div>
 
-      <div className="flex-1 overflow-auto">
-        {tasks.length === 0 ? (
-          <div className="text-center text-muted-foreground">暂无任务</div>
-        ) : (
-          <ul className="space-y-2">
-            {tasks.map((t) => (
-              <li
-                key={t.id}
-                className="p-2 border rounded hover:bg-accent/10 cursor-pointer flex justify-between"
-                onClick={() => openTask(t)}
-              >
-                <span>{t.title}</span>
-                <span className="text-sm text-muted-foreground">{t.status}</span>
-              </li>
-            ))}
-          </ul>
+      <div className="flex-1 flex flex-col">
+        <div className="flex-1 overflow-auto">
+          {tasks.length === 0 ? (
+            <div className="text-center text-muted-foreground py-8">暂无任务</div>
+          ) : (
+            <ul className="space-y-2 p-1">
+              {tasks.map((t) => (
+                <li
+                  key={t.id}
+                  className="p-2 border rounded hover:bg-accent/10 cursor-pointer flex justify-between items-center"
+                  onClick={() => openTask(t)}
+                >
+                  <div className="flex items-center gap-3">
+                    <span>{t.title}</span>
+                    <span className="text-sm text-blue-600 font-medium">
+                      {Math.floor(t.totalDuration / 3600)}h {Math.floor((t.totalDuration % 3600) / 60)}m
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">{t.status}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteTask(t.id)
+                      }}
+                      className="p-1 hover:bg-destructive/10 text-destructive rounded transition-colors"
+                      title="删除任务"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        {tasks.length > 0 && (
+          <div className="p-3 bg-muted/50 rounded-lg border mt-2">
+            <div className="text-sm font-medium text-center">
+              项目总耗时: {Math.floor(totalProjectDuration / 3600)}小时 {Math.floor((totalProjectDuration % 3600) / 60)}分钟
+            </div>
+          </div>
         )}
       </div>
 
@@ -180,111 +270,22 @@ const Project = () => {
             <SheetDescription>查看/编辑任务信息</SheetDescription>
           </SheetHeader>
           {currentTask && (
-            <div className="flex-1 overflow-auto">
-              <div className="space-y-4 pr-4">
-                <div className="text-sm text-muted-foreground">
-                  已用时间: {totalDuration} 秒
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">标题</label>
-                  <Input
-                    value={currentTask.title}
-                    onChange={(e) => setCurrentTask({ ...currentTask, title: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">状态</label>
-                  <Select
-                    value={currentTask.status}
-                    onValueChange={(v) => setCurrentTask({ ...currentTask, status: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STATUS_OPTIONS.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {s}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">优先级</label>
-                  <Input
-                    type="number"
-                    value={currentTask.priority}
-                    onChange={(e) =>
-                      setCurrentTask({ ...currentTask, priority: Number(e.target.value) })
-                    }
-                  />
-                </div>
-
-                {/* 时间记录 */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">时间消耗</label>
-                  <div className="border rounded-lg p-3 bg-muted/30 max-h-48 overflow-auto mb-3 space-y-2">
-                    {timeEntries.map((te) => (
-                      <div key={te.id} className="text-sm flex justify-between items-center bg-background p-2 rounded border">
-                        <div className="flex-1">
-                          <div className="font-medium">{te.description}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {new Date(te.workDate).toLocaleDateString()} · {te.duration}秒
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleDeleteTimeEntry(te.id)}
-                          className="ml-2 p-1 hover:bg-destructive/10 text-destructive rounded transition-colors"
-                          title="删除"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ))}
-                    {timeEntries.length === 0 && (
-                      <div className="text-muted-foreground text-sm text-center py-2">暂无记录</div>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Input
-                      type="date"
-                      value={newEntryDate}
-                      onChange={(e) => setNewEntryDate(e.target.value)}
-                    />
-                    <Input
-                      placeholder="说明"
-                      value={newEntryDesc}
-                      onChange={(e) => setNewEntryDesc(e.target.value)}
-                    />
-                    <Input
-                      type="number"
-                      placeholder="秒"
-                      value={newEntryDuration}
-                      onChange={(e) => setNewEntryDuration(Number(e.target.value))}
-                    />
-                  </div>
-                  <Button className="mt-3 w-full" size="sm" onClick={handleAddEntry}>添加记录</Button>
-                </div>
-              </div>
-            </div>
+            <TaskDetailContent
+              currentTask={currentTask}
+              totalDuration={totalDuration}
+              timeEntries={timeEntries}
+              newEntryDate={newEntryDate}
+              newEntryDesc={newEntryDesc}
+              newEntryDuration={newEntryDuration}
+              onTaskChange={setCurrentTask}
+              onDateChange={setNewEntryDate}
+              onDescChange={setNewEntryDesc}
+              onDurationChange={setNewEntryDuration}
+              onAddEntry={handleAddEntry}
+              onDeleteTimeEntry={handleDeleteTimeEntry}
+            />
           )}
-          <SheetFooter className="flex justify-between mt-4 border-t pt-4">
-            <Button variant="destructive" onClick={async () => {
-              if (!currentTask) return;
-              try {
-                await tasksApi.deleteTask(currentTask.id);
-                toast.success("已删除");
-                setDrawerOpen(false);
-                loadTasks();
-              } catch (e) {
-                toast.error("删除失败");
-              }
-            }}>
-              删除
-            </Button>
+          <SheetFooter className="flex justify-end mt-4 border-t pt-4">
             <div className="flex gap-2">
               <SheetClose asChild>
                 <Button variant="outline">取消</Button>
